@@ -48,6 +48,14 @@ htmlcov/
 # FastAPI
 .ipynb_checkpoints
 
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/next-env.d.ts
+frontend/package-lock.json
+frontend/.env.local
+frontend/.env.*.local
+
 # Environment files
 .env
 .env.local
