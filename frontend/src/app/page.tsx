@@ -13,11 +13,11 @@ export default function Home() {
             CNC <span className="gradient-text">INTELLIGENCE</span>
           </Link>
           <div className="hidden md:flex gap-12 items-center">
-            <a href="#about" className="text-sm font-medium hover:text-cyan-500 transition">O NAS</a>
-            <a href="#services" className="text-sm font-medium hover:text-cyan-500 transition">USŁUGI</a>
-            <a href="#process" className="text-sm font-medium hover:text-cyan-500 transition">PROCES</a>
+            <a href="#about" className="text-sm font-medium hover:text-cyan-500 transition">ABOUT</a>
+            <a href="#services" className="text-sm font-medium hover:text-cyan-500 transition">SERVICES</a>
+            <a href="#process" className="text-sm font-medium hover:text-cyan-500 transition">PROCESS</a>
             <a href="#portfolio" className="text-sm font-medium hover:text-cyan-500 transition">PORTFOLIO</a>
-            <a href="#contact" className="button-accent px-6 py-2 text-sm">KONTAKT</a>
+            <a href="#contact" className="button-accent px-6 py-2 text-sm">CONTACT</a>
           </div>
         </div>
       </nav>
@@ -32,21 +32,21 @@ export default function Home() {
             </div>
             
             <h1 className="hero-text">
-              Inteligencja maszyn,
+              Machine Intelligence,
               <br />
-              <span className="gradient-text">które się liczą.</span>
+              <span className="gradient-text">that counts.</span>
             </h1>
             
             <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
-              Łączymy Machine Learning, przetwarzanie sygnałów i analizę danych w jedną spójną platformę dla precyzyjnych obrabiarek CNC. Predykcja trwałości narzędzi, detekcja anomalii i optymalizacja procesów – wszystko w czasie rzeczywistym.
+              We combine Machine Learning, signal processing, and data analytics into one unified platform for precision CNC machine tools. Tool life prediction, anomaly detection, and process optimization — all in real time.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 pt-8">
               <Link href="/dashboard" className="button-primary">
-                ZOBACZ DEMO
+                VIEW DEMO
               </Link>
               <button className="button-secondary">
-                DOKUMENTACJA <ChevronRight className="inline ml-2 w-5 h-5" />
+                DOCUMENTATION <ChevronRight className="inline ml-2 w-5 h-5" />
               </button>
             </div>
 
@@ -54,15 +54,15 @@ export default function Home() {
             <div className="grid grid-cols-3 gap-8 pt-16 border-t border-slate-200">
               <div>
                 <p className="text-5xl font-bold text-cyan-500">700%</p>
-                <p className="text-sm text-slate-600 mt-2">Średni ROI</p>
+                <p className="text-sm text-slate-600 mt-2">Average ROI</p>
               </div>
               <div>
                 <p className="text-5xl font-bold text-cyan-500">1.4</p>
-                <p className="text-sm text-slate-600 mt-2">Miesiące zwrotu</p>
+                <p className="text-sm text-slate-600 mt-2">Months to ROI</p>
               </div>
               <div>
                 <p className="text-5xl font-bold text-cyan-500">$127K</p>
-                <p className="text-sm text-slate-600 mt-2">Roczne oszczędności</p>
+                <p className="text-sm text-slate-600 mt-2">Annual Savings</p>
               </div>
             </div>
           </div>
@@ -76,13 +76,13 @@ export default function Home() {
             <div>
               <div className="divider-accent"></div>
               <h2 className="section-title">
-                Budujemy inteligencję dla fabryk, które nie mogą sobie pozwolić na błędy.
+                We build intelligence for factories that cannot afford mistakes.
               </h2>
               <p className="text-slate-300 mt-6">
-                Od sześciu lat pracujemy z producentami obrabiarek precyzyjnych na całym świecie. Wiemy, co oznacza utrata narzędzia w rzeczywistym czasie produkcji. Wiemy, jak wygląda przestój nieplanowany. Wiemy, co kosztuje szum w danych.
+                For six years we have worked with precision machine tool manufacturers around the world. We know what it means to lose a tool during live production. We know what an unplanned stoppage looks like. We know what noise in the data costs.
               </p>
               <p className="text-slate-300 mt-4">
-                Dlatego zbudowaliśmy platformę, która nie zgaduje. Która mierzy, analizuje i przewiduje z pewnością 95%.
+                That is why we built a platform that does not guess. One that measures, analyses, and predicts with 95% confidence.
               </p>
             </div>
             <div className="bg-slate-800 rounded-lg p-12 aspect-square flex items-center justify-center">
@@ -102,9 +102,9 @@ export default function Home() {
           <div className="space-y-20">
             <div>
               <div className="divider-accent"></div>
-              <h2 className="section-title">NASZA OFERTA</h2>
+              <h2 className="section-title">OUR SERVICES</h2>
               <p className="text-xl text-slate-600 max-w-2xl">
-                Sześć modułów, które razem tworzą kompletny obraz zdrowia Twoich maszyn.
+                Six modules that together create a complete picture of your machines' health.
               </p>
             </div>
 
@@ -114,11 +114,11 @@ export default function Home() {
               <div className="card-platform">
                 <div className="space-y-6">
                   <p className="service-number">01</p>
-                  <h3 className="text-2xl font-bold">Przewidywanie trwałości</h3>
-                  <p>LSTM deep learning dostarcza prognozę pozostałej żywotności narzędzia z dokładnością 95%+. Real-time.</p>
+                  <h3 className="text-2xl font-bold">Tool Life Prediction</h3>
+                  <p>LSTM deep learning delivers remaining tool life forecasts with 95%+ accuracy. Real-time.</p>
                   <div className="flex items-center text-cyan-500 font-semibold">
                     <TrendingUp className="w-5 h-5 mr-2" />
-                    Zmniejszenie przestojów o 75%
+                    75% reduction in downtime
                   </div>
                 </div>
               </div>
@@ -127,11 +127,11 @@ export default function Home() {
               <div className="card-platform">
                 <div className="space-y-6">
                   <p className="service-number">02</p>
-                  <h3 className="text-2xl font-bold">Detekcja anomalii</h3>
-                  <p>Isolation Forest i analiza hybrydowa identyfikują nienormalne zachowania zanim staną się problemami.</p>
+                  <h3 className="text-2xl font-bold">Anomaly Detection</h3>
+                  <p>Isolation Forest and hybrid analysis identify abnormal behaviour before it becomes a problem.</p>
                   <div className="flex items-center text-cyan-500 font-semibold">
                     <AlertCircle className="w-5 h-5 mr-2" />
-                    Wczesne wykrywanie problemów
+                    Early problem detection
                   </div>
                 </div>
               </div>
@@ -140,11 +140,11 @@ export default function Home() {
               <div className="card-platform">
                 <div className="space-y-6">
                   <p className="service-number">03</p>
-                  <h3 className="text-2xl font-bold">Optymalizacja procesów</h3>
-                  <p>XGBoost rekomenduje parametry posuw i obroty dla maksymalnej wydajności i trwałości narzędziem.</p>
+                  <h3 className="text-2xl font-bold">Process Optimization</h3>
+                  <p>XGBoost recommends feed rate and spindle speed parameters for maximum efficiency and tool longevity.</p>
                   <div className="flex items-center text-cyan-500 font-semibold">
                     <Zap className="w-5 h-5 mr-2" />
-                    5-40% wzrost wydajności
+                    5-40% efficiency increase
                   </div>
                 </div>
               </div>
@@ -153,11 +153,11 @@ export default function Home() {
               <div className="card-platform">
                 <div className="space-y-6">
                   <p className="service-number">04</p>
-                  <h3 className="text-2xl font-bold">Wieloprotokołowa integracja</h3>
-                  <p>MTConnect, OPC-UA, Modbus, MQTT – pracujemy z każdą obrabiarką. Zero modyfikacji hardware'u.</p>
+                  <h3 className="text-2xl font-bold">Multi-Protocol Integration</h3>
+                  <p>MTConnect, OPC-UA, Modbus, MQTT — we work with any machine tool. Zero hardware modifications.</p>
                   <div className="flex items-center text-cyan-500 font-semibold">
                     <Settings className="w-5 h-5 mr-2" />
-                    Kompatybilne z każdy CNC
+                    Compatible with any CNC
                   </div>
                 </div>
               </div>
@@ -166,11 +166,11 @@ export default function Home() {
               <div className="card-platform">
                 <div className="space-y-6">
                   <p className="service-number">05</p>
-                  <h3 className="text-2xl font-bold">Streaming w czasie rzeczywistym</h3>
-                  <p>Kafka + WebSocket dla live dashboardów. 1-2 sekundowe opóźnienia, 1000s maszyn jednocześnie.</p>
+                  <h3 className="text-2xl font-bold">Real-Time Streaming</h3>
+                  <p>Kafka + WebSocket for live dashboards. 1-2 second latency, thousands of machines simultaneously.</p>
                   <div className="flex items-center text-cyan-500 font-semibold">
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    Widoczność na żywo
+                    Live visibility
                   </div>
                 </div>
               </div>
@@ -180,10 +180,10 @@ export default function Home() {
                 <div className="space-y-6">
                   <p className="service-number">06</p>
                   <h3 className="text-2xl font-bold">ROI Analytics</h3>
-                  <p>Obliczenia oszczędności: narzędzia (-30%), przestoje (-75%), braki (-55%). Dashboard finansowy.</p>
+                  <p>Savings calculations: tools (-30%), downtime (-75%), scrap (-55%). Financial dashboard.</p>
                   <div className="flex items-center text-cyan-500 font-semibold">
                     <TrendingUp className="w-5 h-5 mr-2" />
-                    $127K rocznych oszczędności
+                    $127K annual savings
                   </div>
                 </div>
               </div>
@@ -198,9 +198,9 @@ export default function Home() {
           <div className="space-y-20">
             <div>
               <div className="divider-accent"></div>
-              <h2 className="section-title">NASZE PROCESY</h2>
+              <h2 className="section-title">OUR PROCESS</h2>
               <p className="text-xl text-slate-300">
-                Od rozmowy do pełnej produkcji w czterech krokach.
+                From conversation to full production in four steps.
               </p>
             </div>
 
@@ -212,7 +212,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold">Diagnosis & Strategy</h3>
                 <p className="text-slate-300">
-                  Analizujemy Twoje maszyny, protokoły i aktualne boleści. Budujemy plan wdrożenia i harmonogram.
+                  We analyse your machines, protocols, and current pain points. We build an implementation plan and schedule.
                 </p>
               </div>
 
@@ -223,7 +223,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold">Integration & Testing</h3>
                 <p className="text-slate-300">
-                  Instalujemy adaptery protokołowe. Testujemy na 30 dni w parallel z produkcją. Zero ryzyka.
+                  We install protocol adapters. Tested for 30 days in parallel with production. Zero risk.
                 </p>
               </div>
 
@@ -234,7 +234,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold">Deployment & Training</h3>
                 <p className="text-slate-300">
-                  Pełne wdrażanie. Szkolenie zespołów. Dashboardy w produkcji – operatorzy od razu widzą wartość.
+                  Full deployment. Team training. Dashboards in production — operators see value immediately.
                 </p>
               </div>
 
@@ -245,7 +245,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold">Support & Optimization</h3>
                 <p className="text-slate-300">
-                  Stała opieka. Optymalizacja modeli. Nowe cechy. Jesteśmy partnerem na lata.
+                  Ongoing support. Model optimisation. New features. We are your long-term partner.
                 </p>
               </div>
             </div>
@@ -271,9 +271,9 @@ export default function Home() {
                     <p className="text-slate-500 mt-4">Fanuc Manufacturing Plant</p>
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold">Fabryka precyzyjnych części lotniczych</h3>
-                <p className="text-slate-600">Zmniejszenie nieplanowanych przestojów o 75%. Prognoza trwałości narzędzi z dokładnością 96%. ROI 820% w 1.2 miesiąca.</p>
-                <p className="text-sm text-slate-400 font-semibold">12 obrabiarek • LSTM + Isolation Forest • Kafka streaming</p>
+                <h3 className="text-2xl font-bold">Precision Aerospace Parts Factory</h3>
+                <p className="text-slate-600">75% reduction in unplanned downtime. Tool life forecast accuracy of 96%. ROI 820% in 1.2 months.</p>
+                <p className="text-sm text-slate-400 font-semibold">12 machines • LSTM + Isolation Forest • Kafka streaming</p>
               </div>
 
               {/* Case 2 */}
@@ -284,9 +284,9 @@ export default function Home() {
                     <p className="text-slate-500 mt-4">Siemens Production Line</p>
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold">Linia produkcyjna hydrauliki przemysłowej</h3>
-                <p className="text-slate-600">Oszczędności narzędzi $180K rocznie. Optymalizacja procesu: +22% wydajności. Wdrożenie: 3 tygodnie.</p>
-                <p className="text-sm text-slate-400 font-semibold">24 maszyny • MTConnect + OPC-UA • Multi-tenant</p>
+                <h3 className="text-2xl font-bold">Industrial Hydraulics Production Line</h3>
+                <p className="text-slate-600">Tool savings of $180K per year. Process optimisation: +22% efficiency. Deployment: 3 weeks.</p>
+                <p className="text-sm text-slate-400 font-semibold">24 machines • MTConnect + OPC-UA • Multi-tenant</p>
               </div>
             </div>
           </div>
@@ -301,33 +301,33 @@ export default function Home() {
               <div>
                 <div className="divider-accent"></div>
                 <h2 className="section-title text-white">
-                  Rozmawiajmy <br />
-                  o Twojej strategii.
+                  Let's talk <br />
+                  about your strategy.
                 </h2>
               </div>
               
               <p className="text-xl text-slate-300">
-                Nie musisz mieć gotowego briefu. Wystarczy, że opowiesz nam o swoich maszynach – resztą zajmiemy się my.
+                You don't need a ready brief. Just tell us about your machines — we'll take care of the rest.
               </p>
 
               <form className="space-y-6 pt-8">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-3">Opowiedz o Twojej fabryce</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-3">Tell us about your factory</label>
                   <textarea 
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                     rows={6}
-                    placeholder="Ile maszyn? Jakie kontrolery? Jakie boleści?"
+                    placeholder="How many machines? What controllers? What are the pain points?"
                   />
                 </div>
                 <button type="submit" className="button-accent w-full">
-                  WYŚLIJ WIADOMOŚĆ
+                  SEND MESSAGE
                 </button>
               </form>
 
               <div className="border-t border-slate-700 pt-8 space-y-4">
-                <p className="text-sm text-slate-400">KONTAKT</p>
+                <p className="text-sm text-slate-400">CONTACT</p>
                 <p className="text-white font-semibold">contact@cncintelligence.com</p>
-                <p className="text-slate-300">Warszawa, Polska</p>
+                <p className="text-slate-300">Warsaw, Poland</p>
               </div>
             </div>
           </div>
@@ -339,7 +339,7 @@ export default function Home() {
         <div className="container-max">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-12 border-b border-slate-800">
             <div>
-              <p className="text-xs font-semibold text-slate-400 mb-4">PRODUKT</p>
+              <p className="text-xs font-semibold text-slate-400 mb-4">PRODUCT</p>
               <ul className="space-y-2 text-sm">
                 <li><a href="#" className="hover:text-cyan-400 transition">Features</a></li>
                 <li><a href="#" className="hover:text-cyan-400 transition">Pricing</a></li>
