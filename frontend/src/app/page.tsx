@@ -16,8 +16,11 @@ export default function Home() {
             <a href="#about" className="text-sm font-medium hover:text-cyan-500 transition">ABOUT</a>
             <a href="#services" className="text-sm font-medium hover:text-cyan-500 transition">SERVICES</a>
             <a href="#process" className="text-sm font-medium hover:text-cyan-500 transition">PROCESS</a>
+            <Link href="/pricing" className="text-sm font-medium hover:text-cyan-500 transition">PRICING</Link>
             <a href="#portfolio" className="text-sm font-medium hover:text-cyan-500 transition">PORTFOLIO</a>
-            <a href="#contact" className="button-accent px-6 py-2 text-sm">CONTACT</a>
+            <Link href="/contact" className="text-sm font-medium hover:text-cyan-500 transition">CONTACT</Link>
+            <Link href="/auth/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition">Sign In</Link>
+            <Link href="/auth/signup" className="button-accent px-6 py-2 text-sm">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -45,9 +48,9 @@ export default function Home() {
               <Link href="/dashboard" className="button-primary">
                 VIEW DEMO
               </Link>
-              <button className="button-secondary">
-                DOCUMENTATION <ChevronRight className="inline ml-2 w-5 h-5" />
-              </button>
+              <Link href="/auth/signup" className="button-secondary">
+                GET STARTED <ChevronRight className="inline ml-2 w-5 h-5" />
+              </Link>
             </div>
 
             {/* Stats */}
@@ -312,6 +315,7 @@ export default function Home() {
 
               <form className="space-y-6 pt-8">
                 <div>
+                <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-3">Tell us about your factory</label>
                   <textarea 
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
@@ -320,13 +324,13 @@ export default function Home() {
                   />
                 </div>
                 <button type="submit" className="button-accent w-full">
-                  SEND MESSAGE
+                  CONTACT SALES
                 </button>
               </form>
 
               <div className="border-t border-slate-700 pt-8 space-y-4">
                 <p className="text-sm text-slate-400">CONTACT</p>
-                <p className="text-white font-semibold">contact@cncintelligence.com</p>
+                <p className="text-white font-semibold">admin@mayankiitj.in</p>
                 <p className="text-slate-300">Warsaw, Poland</p>
               </div>
             </div>
@@ -339,35 +343,35 @@ export default function Home() {
         <div className="container-max">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-12 border-b border-slate-800">
             <div>
-              <p className="text-xs font-semibold text-slate-400 mb-4">PRODUKT</p>
+              <p className="text-xs font-semibold text-slate-400 mb-4">PRODUCT</p>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-cyan-400 transition">Features</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">Pricing</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">Demo</a></li>
+                <li><a href="#services" className="hover:text-cyan-400 transition">Features</a></li>
+                <li><a href="/pricing" className="hover:text-cyan-400 transition">Pricing</a></li>
+                <li><a href="/dashboard" className="hover:text-cyan-400 transition">Demo</a></li>
               </ul>
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 mb-4">COMPANY</p>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-cyan-400 transition">About</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">Blog</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">Careers</a></li>
+                <li><a href="/about" className="hover:text-cyan-400 transition">About</a></li>
+                <li><a href="/contact" className="hover:text-cyan-400 transition">Contact</a></li>
+                <li><a href="/auth/login" className="hover:text-cyan-400 transition">Sign In</a></li>
               </ul>
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 mb-4">RESOURCES</p>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-cyan-400 transition">Docs</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">API</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">Support</a></li>
+                <li><a href="#about" className="hover:text-cyan-400 transition">Learn</a></li>
+                <li><a href="/contact" className="hover:text-cyan-400 transition">Support</a></li>
+                <li><a href="/pricing" className="hover:text-cyan-400 transition">Pricing</a></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 mb-4">LEGAL</p>
+              <p className="text-xs font-semibold text-slate-400 mb-4">CONNECT</p>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-cyan-400 transition">Privacy</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">Terms</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition">Security</a></li>
+                <li><a href="#" className="hover:text-cyan-400 transition">Discord</a></li>
+                <li><a href="#" className="hover:text-cyan-400 transition">LinkedIn</a></li>
+                <li><a href="#" className="hover:text-cyan-400 transition">Twitter</a></li>
               </ul>
             </div>
           </div>
