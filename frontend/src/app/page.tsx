@@ -330,7 +330,7 @@ export default function Home() {
               <div className="border-t border-slate-700 pt-8 space-y-4">
                 <p className="text-sm text-slate-400">CONTACT</p>
                 <p className="text-white font-semibold">admin@mayankiitj.in</p>
-                <p className="text-slate-300">Warsaw, Poland</p>
+                <p className="text-slate-300">Bengaluru, India</p>
               </div>
             </div>
           </div>
