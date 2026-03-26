@@ -4,6 +4,10 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'CNC Intelligence Platform',
   description: 'AI-Powered CNC Process Intelligence System',
+  icons: {
+    icon: '/favicon.jpg',
+    apple: '/favicon.jpg',
+  },
 }
 
 export default function RootLayout({
