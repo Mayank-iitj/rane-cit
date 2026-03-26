@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Typography Foundation */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  @apply antialiased;
+}
+
+html {
+  @apply scroll-smooth;
+}
+
+body {
+  @apply bg-white text-slate-900;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  @apply text-6xl md:text-7xl lg:text-8xl;
+}
+
+h2 {
+  @apply text-5xl md:text-6xl;
+}
+
+h3 {
+  @apply text-3xl md:text-4xl;
+}
+
+h4 {
+  @apply text-2xl md:text-3xl;
+}
+
+p {
+  @apply text-lg leading-relaxed text-slate-600;
+}
+
+/* Utility Classes */
+.hero-text {
+  @apply text-5xl md:text-7xl font-bold leading-tight;
+  letter-spacing: -0.02em;
+}
+
+.section-spacing {
+  @apply py-24 md:py-32 lg:py-40;
+}
+
+.container-max {
+  @apply max-w-7xl mx-auto px-6 lg:px-12;
+}
+
+.button-primary {
+  @apply px-8 py-4 bg-black text-white font-semibold hover:bg-slate-800 transition-all duration-300 text-lg;
+}
+
+.button-secondary {
+  @apply px-8 py-4 border-2 border-black text-black font-semibold hover:bg-black hover:text-white transition-all duration-300 text-lg;
+}
+
+.button-accent {
+  @apply px-8 py-4 bg-cyan-500 text-white font-semibold hover:bg-cyan-600 transition-all duration-300 text-lg;
+}
+
+.card-platform {
+  @apply bg-white border border-slate-200 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1;
+}
+
+.service-number {
+  @apply text-7xl md:text-8xl font-bold text-slate-100;
+}
+
+.section-title {
+  @apply text-6xl md:text-7xl font-bold mb-8 leading-tight;
+  letter-spacing: -0.02em;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent;
+}
+
+.divider-accent {
+  @apply w-16 h-1 bg-cyan-500 mb-8;
+}
+
+/* Dark Section Styles */
+.dark-section {
+  @apply bg-slate-900 text-white;
+}
+
+.dark-section h1,
+.dark-section h2,
+.dark-section h3,
+.dark-section h4 {
+  @apply text-white;
+}
+
+.dark-section p {
+  @apply text-slate-300;
+}
+
+/* Grid Layouts */
+.grid-cols-services {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8;
+}
+
+.grid-cols-process {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.7s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  h1 {
+    @apply text-4xl;
+  }
+  
+  h2 {
+    @apply text-3xl;
+  }
+  
+  .hero-text {
+    @apply text-3xl;
+  }
+  
+  .section-title {
+    @apply text-4xl;
+  }
+  
+  .service-number {
+    @apply text-5xl;
+  }
+}
