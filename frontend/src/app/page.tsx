@@ -315,7 +315,6 @@ export default function Home() {
 
               <form className="space-y-6 pt-8">
                 <div>
-                <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-3">Tell us about your factory</label>
                   <textarea 
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
