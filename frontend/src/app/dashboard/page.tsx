@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { MachineList } from '@/components/MachineList'
 import { AlertTimeline } from '@/components/AlertTimeline'
@@ -7,6 +9,38 @@ import { OptimizationPanel } from '@/components/OptimizationPanel'
 import { ROIDashboard } from '@/components/ROIDashboard'
 
 export default function Dashboard() {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    // Check for authentication token
+    const token = localStorage.getItem('token')
+    const userData = localStorage.getItem('user')
+
+    if (!token) {
+      router.push('/auth/login')
+      return
+    }
+
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
+
+    setIsLoading(false)
+  }, [router])
+
+  if (isLoading) {
+    return (
+      <div className="bg-slate-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+          <p className="text-white">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
