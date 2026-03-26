@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+'use client'
+
+import { useEffect, useState, useRef } from 'react'
 
 interface LottieComponentProps {
   animationData: any
@@ -16,7 +18,7 @@ export default function LottieComponent({
   className = '',
 }: LottieComponentProps) {
   const [animationInstance, setAnimationInstance] = useState<any>(null)
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Dynamically import lottie-web to avoid SSR issues
@@ -40,5 +42,3 @@ export default function LottieComponent({
 
   return <div ref={containerRef} className={className} style={style} />
 }
-
-import { useRef } from 'react'
