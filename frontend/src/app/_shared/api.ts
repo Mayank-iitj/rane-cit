@@ -1,5 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8002/ws';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || '';
 
 export interface User {
   id: string;
@@ -131,7 +131,11 @@ export function connectWebSocket(onMessage: (data: WebSocketMessage) => void): W
     return null;
   }
 
-  const ws = new WebSocket(WS_URL);
+  const derivedWsUrl =
+    WS_URL ||
+    `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+
+  const ws = new WebSocket(derivedWsUrl);
 
   ws.onmessage = (event) => {
     try {
