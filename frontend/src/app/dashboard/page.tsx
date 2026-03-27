@@ -118,26 +118,121 @@ interface TwinState {
   tool_life_remaining_min?: number;
 }
 
+interface CopilotPreset {
+  question: string;
+  answer: string;
+  actions: string[];
+}
+
+const DEMO_FLEET: FleetData = {
+  total_machines: 8,
+  running_count: 6,
+  fleet_utilization: 82.4,
+  active_alerts: 3,
+  total_energy_kwh: 1248.7,
+};
+
+const DEMO_MACHINES: MachineData[] = [
+  { id: 'mcn-01', name: 'Haas VF-2 #A1', status: 'running', protocol: 'MTConnect', model: 'VF-2', manufacturer: 'Haas', location: 'Line A - Cell 1' },
+  { id: 'mcn-02', name: 'DMG Mori CMX #B2', status: 'running', protocol: 'OPC-UA', model: 'CMX 1100 V', manufacturer: 'DMG Mori', location: 'Line B - Cell 2' },
+  { id: 'mcn-03', name: 'Mazak QTN #C3', status: 'idle', protocol: 'Modbus', model: 'QTN 250', manufacturer: 'Mazak', location: 'Line C - Cell 1' },
+  { id: 'mcn-04', name: 'Makino PS95 #A2', status: 'running', protocol: 'MTConnect', model: 'PS95', manufacturer: 'Makino', location: 'Line A - Cell 2' },
+  { id: 'mcn-05', name: 'Okuma GENOS #B1', status: 'running', protocol: 'OPC-UA', model: 'GENOS M560V', manufacturer: 'Okuma', location: 'Line B - Cell 1' },
+  { id: 'mcn-06', name: 'Doosan DNM #D1', status: 'offline', protocol: 'MQTT', model: 'DNM 4500', manufacturer: 'Doosan', location: 'Line D - Cell 1' },
+  { id: 'mcn-07', name: 'Brother Speedio #E1', status: 'running', protocol: 'MTConnect', model: 'S700X1', manufacturer: 'Brother', location: 'Line E - Cell 1' },
+  { id: 'mcn-08', name: 'Hurco VMX #F1', status: 'idle', protocol: 'Modbus', model: 'VMX42', manufacturer: 'Hurco', location: 'Line F - Cell 1' },
+];
+
+const DEMO_ALERTS: AlertData[] = [
+  { id: 'alt-001', severity: 'critical', type: 'HIGH_TEMPERATURE', title: 'Spindle temperature exceeded threshold', machine_id: 'mcn-02', is_acknowledged: false },
+  { id: 'alt-002', severity: 'warning', type: 'VIBRATION_ANOMALY', title: 'Abnormal vibration trend on X axis', machine_id: 'mcn-04', is_acknowledged: false },
+  { id: 'alt-003', severity: 'info', type: 'TOOL_WEAR', title: 'Tool life below 18%', machine_id: 'mcn-05', is_acknowledged: true },
+  { id: 'alt-004', severity: 'warning', type: 'ENERGY_SPIKE', title: 'Power draw anomaly detected', machine_id: 'mcn-01', is_acknowledged: false },
+  { id: 'alt-005', severity: 'info', type: 'COOLANT_FLOW', title: 'Coolant flow reduced by 9%', machine_id: 'mcn-03', is_acknowledged: true },
+];
+
+const DEMO_ALERT_STATS: AlertStats = {
+  total: 5,
+  critical: 1,
+  warning: 2,
+  unacknowledged: 3,
+};
+
+const DEMO_OEE: OEEData[] = [
+  { machine_name: 'Haas VF-2 #A1', availability: 93.2, performance: 88.4, quality: 97.1, oee: 79.9 },
+  { machine_name: 'DMG Mori CMX #B2', availability: 89.6, performance: 85.8, quality: 96.4, oee: 74.0 },
+  { machine_name: 'Makino PS95 #A2', availability: 95.0, performance: 90.5, quality: 98.2, oee: 84.4 },
+  { machine_name: 'Okuma GENOS #B1', availability: 91.4, performance: 87.6, quality: 97.5, oee: 78.0 },
+];
+
+const DEMO_ENERGY: EnergyData[] = [
+  { machine_name: 'Haas VF-2 #A1', total_kwh: 182.4, avg_power_w: 6120, peak_power_w: 8900, cost_estimate: 22.8, efficiency_score: 88.1 },
+  { machine_name: 'DMG Mori CMX #B2', total_kwh: 205.3, avg_power_w: 6640, peak_power_w: 9300, cost_estimate: 25.7, efficiency_score: 84.3 },
+  { machine_name: 'Makino PS95 #A2', total_kwh: 169.8, avg_power_w: 5840, peak_power_w: 8120, cost_estimate: 21.2, efficiency_score: 91.2 },
+  { machine_name: 'Okuma GENOS #B1', total_kwh: 191.1, avg_power_w: 6290, peak_power_w: 9020, cost_estimate: 23.9, efficiency_score: 86.8 },
+];
+
+const DEMO_LIVE: LiveTelemetry[] = [
+  { machine_name: 'Haas VF-2 #A1', spindle_speed: 12400, temperature: 62.4, vibration: 2.14, load_percent: 71.3 },
+  { machine_name: 'DMG Mori CMX #B2', spindle_speed: 11680, temperature: 89.2, vibration: 7.94, load_percent: 92.5 },
+  { machine_name: 'Makino PS95 #A2', spindle_speed: 13220, temperature: 58.6, vibration: 1.98, load_percent: 67.8 },
+  { machine_name: 'Okuma GENOS #B1', spindle_speed: 10950, temperature: 65.1, vibration: 2.47, load_percent: 74.2 },
+];
+
+const DEMO_TWIN_STATES: Record<string, TwinState> = {
+  'mcn-01': { machine_name: 'Haas VF-2 #A1', status: 'RUNNING', health_score: 91, spindle_speed_rpm: 12400, spindle_temperature_c: 62.4, vibration_mm_s: 2.14, tool_wear_percent: 28.3, power_consumption_w: 6120, coolant_flow_lpm: 16.2, tool_life_remaining_min: 210 },
+  'mcn-02': { machine_name: 'DMG Mori CMX #B2', status: 'RUNNING', health_score: 72, spindle_speed_rpm: 11680, spindle_temperature_c: 89.2, vibration_mm_s: 7.94, tool_wear_percent: 67.5, power_consumption_w: 6640, coolant_flow_lpm: 13.4, tool_life_remaining_min: 64 },
+  'mcn-03': { machine_name: 'Mazak QTN #C3', status: 'IDLE', health_score: 86, spindle_speed_rpm: 0, spindle_temperature_c: 39.8, vibration_mm_s: 0.92, tool_wear_percent: 42.0, power_consumption_w: 1800, coolant_flow_lpm: 6.1, tool_life_remaining_min: 185 },
+  'mcn-04': { machine_name: 'Makino PS95 #A2', status: 'RUNNING', health_score: 88, spindle_speed_rpm: 13220, spindle_temperature_c: 58.6, vibration_mm_s: 1.98, tool_wear_percent: 31.4, power_consumption_w: 5840, coolant_flow_lpm: 15.8, tool_life_remaining_min: 233 },
+};
+
+const COPILOT_PRESET_QNA: CopilotPreset[] = [
+  { question: 'Which machine is highest risk right now?', answer: 'DMG Mori CMX #B2 is highest risk. It has 89.2C spindle temperature, 7.94 mm/s vibration, and only 64 minutes estimated tool life remaining.', actions: ['Schedule 20-min maintenance window', 'Reduce spindle by 8%', 'Inspect spindle bearings'] },
+  { question: 'Why did OEE drop this shift?', answer: 'OEE dropped primarily due to performance loss on CMX #B2 and one offline asset (Doosan DNM #D1). Availability remained high, but cycle slowdown increased by ~11%.', actions: ['Rebalance jobs to Makino PS95', 'Run feed/spindle optimization profile', 'Bring DNM #D1 back online'] },
+  { question: 'What should we do about the critical alert?', answer: 'Immediate response: cool down CMX #B2 spindle and inspect lubrication flow. This is a heat-driven failure precursor, not a transient spike.', actions: ['Pause current high-load job', 'Verify coolant pressure', 'Trigger maintenance checklist M-14'] },
+  { question: 'Best optimization opportunity today?', answer: 'Process optimization on Haas VF-2 #A1 can deliver the biggest gain: predicted 6.8% cycle-time reduction with no quality penalty.', actions: ['Apply profile OPT-VF2-06', 'Increase feed by 4%', 'Reduce idle retract motion'] },
+  { question: 'Projected savings for this month?', answer: 'Projected monthly savings: $11,600 from downtime reduction, $3,200 from tool-life extension, and $1,750 from energy improvements.', actions: ['Export ROI summary', 'Share with finance', 'Enable weekly savings report'] },
+  { question: 'Any anomaly trend we should watch?', answer: 'Yes. Vibration drift on Makino PS95 #A2 is upward for 3 consecutive hours. It is below critical but statistically significant.', actions: ['Set tighter vibration threshold', 'Schedule spindle balance check', 'Enable 10-min anomaly polling'] },
+  { question: 'What is the fastest way to reduce unacknowledged alerts?', answer: 'Auto-route alerts by severity and machine ownership. 3 alerts are pending acknowledgment and can be closed within one shift.', actions: ['Route critical to maintenance lead', 'Auto-ack info alerts', 'Use 30-min escalation policy'] },
+  { question: 'How healthy is the fleet overall?', answer: 'Fleet health is stable at 84/100. 6 machines running, 2 idle/offline, with 1 machine in elevated risk category.', actions: ['Maintain current load distribution', 'Prioritize CMX inspection', 'Restart DNM #D1 diagnostics'] },
+  { question: 'What should we present to judges in 2 minutes?', answer: 'Show three points: realtime telemetry feed, predictive alert before failure, and ROI dashboard proving measurable impact. This demonstrates operational and financial value.', actions: ['Open Dashboard tab', 'Highlight critical alert workflow', 'Show monthly savings estimate'] },
+  { question: 'Can we run in demo-only mode safely?', answer: 'Yes. Demo mode is active with stable synthetic data across machines, alerts, analytics, digital twin, and copilot answers. No external dependencies required.', actions: ['Keep demo mode enabled', 'Use preset Q&A only', 'Avoid live API calls during presentation'] },
+];
+
 // ═══════════════════════════════════════════════════
 // Main Dashboard App
 // ═══════════════════════════════════════════════════
 export default function DashboardPage() {
+  const DEMO_MODE = true;
   const [activePage, setActivePage] = useState('dashboard');
-  const [fleet, setFleet] = useState<FleetData | null>(null);
-  const [machines, setMachines] = useState<MachineData[]>([]);
-  const [alerts, setAlerts] = useState<AlertData[]>([]);
-  const [alertStats, setAlertStats] = useState<AlertStats | null>(null);
-  const [oee, setOEE] = useState<OEEData[]>([]);
-  const [energy, setEnergy] = useState<EnergyData[]>([]);
-  const [liveData, setLiveData] = useState<LiveTelemetry[]>([]);
-  const [copilotMessages, setCopilotMessages] = useState<CopilotMessage[]>([{ role: 'assistant', text: "I'm the cnc.mayyanks.app AI Copilot. Ask me about your machines, predictions, or optimizations." }]);
+  const [fleet, setFleet] = useState<FleetData | null>(DEMO_FLEET);
+  const [machines, setMachines] = useState<MachineData[]>(DEMO_MACHINES);
+  const [alerts, setAlerts] = useState<AlertData[]>(DEMO_ALERTS);
+  const [alertStats, setAlertStats] = useState<AlertStats | null>(DEMO_ALERT_STATS);
+  const [oee, setOEE] = useState<OEEData[]>(DEMO_OEE);
+  const [energy, setEnergy] = useState<EnergyData[]>(DEMO_ENERGY);
+  const [liveData, setLiveData] = useState<LiveTelemetry[]>(DEMO_LIVE);
+  const [copilotMessages, setCopilotMessages] = useState<CopilotMessage[]>([
+    { role: 'assistant', text: 'Presentation Copilot is in demo mode. Choose one of the 10 preset judge questions below.' },
+  ]);
   const [copilotInput, setCopilotInput] = useState('');
-  const [twinState, setTwinState] = useState<TwinState | null>(null);
+  const [twinState, setTwinState] = useState<TwinState | null>(DEMO_TWIN_STATES[DEMO_MACHINES[0].id]);
 
   const auth = getAuth();
 
   // Fetch data
   const fetchData = useCallback(async () => {
+    if (DEMO_MODE) {
+      setFleet(DEMO_FLEET);
+      setMachines(DEMO_MACHINES);
+      setAlerts(DEMO_ALERTS);
+      setAlertStats(DEMO_ALERT_STATS);
+      setOEE(DEMO_OEE);
+      setEnergy(DEMO_ENERGY);
+      setLiveData(DEMO_LIVE);
+      return;
+    }
+
     try {
       const [fleetRes, machinesRes, alertsRes, alertStatsRes, oeeRes, energyRes] = await Promise.all([
         api.getFleet(), api.listMachines(), api.listAlerts(), api.getAlertStats(), api.getOEE(), api.getEnergy()
@@ -150,8 +245,15 @@ export default function DashboardPage() {
       if (energyRes.ok) setEnergy(await energyRes.json());
     } catch (e) {
       console.error('Fetch error:', e);
+      setFleet(DEMO_FLEET);
+      setMachines(DEMO_MACHINES);
+      setAlerts(DEMO_ALERTS);
+      setAlertStats(DEMO_ALERT_STATS);
+      setOEE(DEMO_OEE);
+      setEnergy(DEMO_ENERGY);
+      setLiveData(DEMO_LIVE);
     }
-  }, []);
+  }, [DEMO_MODE]);
 
   useEffect(() => {
     // No authentication required - allow guest access
@@ -162,6 +264,9 @@ export default function DashboardPage() {
 
     // WebSocket
     const ws = connectWebSocket((msg) => {
+      if (DEMO_MODE) {
+        return;
+      }
       if (msg.channel === 'telemetry:new') {
         setLiveData(prev => [...prev.slice(-50), msg.data as LiveTelemetry]);
       }
@@ -171,27 +276,30 @@ export default function DashboardPage() {
     });
 
     return () => { clearInterval(interval); ws?.close(); };
-  }, [auth.isAuthenticated, fetchData]);
+  }, [DEMO_MODE, auth.isAuthenticated, fetchData]);
 
   const handleLogout = () => { clearAuth(); window.location.href = '/'; };
 
-  const handleCopilotSend = async () => {
-    if (!copilotInput.trim()) return;
-    const q = copilotInput;
-    setCopilotMessages(prev => [...prev, { role: 'user', text: q }]);
-    setCopilotInput('');
-    try {
-      const res = await api.askCopilot(q, machines[0]?.id);
-      if (res.ok) {
-        const data = await res.json();
-        setCopilotMessages(prev => [...prev, { role: 'assistant', text: data.answer, actions: data.suggested_actions }]);
-      }
-    } catch {}
+  const handlePresetQuestion = (preset: CopilotPreset) => {
+    setCopilotMessages(prev => [
+      ...prev,
+      { role: 'user', text: preset.question },
+      { role: 'assistant', text: preset.answer, actions: preset.actions },
+    ]);
   };
 
   const loadTwin = async (machineId: string) => {
+    if (DEMO_MODE) {
+      setTwinState(DEMO_TWIN_STATES[machineId] || null);
+      return;
+    }
+
     const res = await api.getDigitalTwin(machineId);
-    if (res.ok) setTwinState(await res.json());
+    if (res.ok) {
+      setTwinState(await res.json());
+    } else {
+      setTwinState(DEMO_TWIN_STATES[machineId] || null);
+    }
   };
 
   // ═══════ RENDER ═══════
@@ -409,6 +517,22 @@ export default function DashboardPage() {
           {/* ═══ AI Copilot ═══ */}
           {activePage === 'copilot' && (
             <div className="chat-container">
+              <div className="card" style={{ margin: '0 1rem 1rem' }}>
+                <div className="card-header"><span className="card-title">Judge Demo Questions (Preset)</span></div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {COPILOT_PRESET_QNA.map((item, idx) => (
+                    <button
+                      key={idx}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.78rem', padding: '0.4rem 0.65rem' }}
+                      onClick={() => handlePresetQuestion(item)}
+                    >
+                      Q{idx + 1}: {item.question}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="chat-messages">
                 {copilotMessages.map((msg, i) => (
                   <div key={i} className="chat-message">
@@ -426,8 +550,14 @@ export default function DashboardPage() {
                 ))}
               </div>
               <div className="chat-input-area">
-                <input className="form-input" placeholder='Ask: "Why did Machine 2 stop?" or "Predict next failure"' value={copilotInput} onChange={e => setCopilotInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCopilotSend()} />
-                <button className="btn btn-primary" onClick={handleCopilotSend}>Send</button>
+                <input
+                  className="form-input"
+                  placeholder="Preset Q&A mode enabled for judges presentation"
+                  value={copilotInput}
+                  onChange={e => setCopilotInput(e.target.value)}
+                  readOnly
+                />
+                <button className="btn btn-primary" disabled>Preset Only</button>
               </div>
             </div>
           )}
