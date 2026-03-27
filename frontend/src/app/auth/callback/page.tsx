@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { setAuth } from '@/lib/api';
+import { setAuth } from '../../../lib/api';
 
 export default function AuthCallback() {
   useEffect(() => {

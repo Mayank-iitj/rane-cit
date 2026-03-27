@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { api, getAuth, clearAuth, connectWebSocket } from '@/lib/api';
+import { api, getAuth, clearAuth, connectWebSocket } from '../../lib/api';
 
 // ═══════════════════════════════════════════════════
 // Icons (inline SVG for zero dependencies)
