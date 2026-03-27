@@ -77,25 +77,23 @@ services:
 
   cnc-mayyanks-api:
     build:
-      context: ../api
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile.backend
     container_name: cnc-mayyanks-api
     environment:
-      - APP_NAME=cnc-mayyanks-api
-      - APP_DOMAIN=cnc.mayyanks.app
-      - DATABASE_URL=postgresql+asyncpg://cnc_mayyanks:cnc_secret@postgres:5432/cnc_mayyanks_db
-      - REDIS_URL=redis://redis:6379/0
-      - KAFKA_BROKERS=kafka:9092
-      - MQTT_BROKER=mqtt
-      - ML_SERVICE_URL=http://cnc-mayyanks-ml-service:8001
-      - REALTIME_SERVICE_URL=http://cnc-mayyanks-realtime:8002
-      - INGESTION_SERVICE_URL=http://cnc-mayyanks-ingestion:8003
-      - SECRET_KEY=cnc-mayyanks-production-secret-change-me
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-https://cnc.mayyanks.app/api/auth/google/callback}
-      - ENABLE_SIMULATOR=true
-      - DEBUG=false
+      - NODE_ENV=production
+      - PORT=8000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=cnc_mayyanks
+      - DB_PASSWORD=cnc_secret
+      - DB_NAME=cnc_mayyanks_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CORS_ORIGINS=https://cnc.mayyanks.app,http://localhost:3000
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
     ports:
       - "8000:8000"
     depends_on:

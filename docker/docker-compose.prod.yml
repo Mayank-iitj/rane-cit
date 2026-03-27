@@ -1,127 +1,71 @@
 version: '3.9'
 
 services:
-  # ═══════════════════════════════════════════════════
-  # Infrastructure: PostgreSQL + TimescaleDB + Redis + Kafka + MQTT
-  # ═══════════════════════════════════════════════════
-
   postgres:
     image: timescale/timescaledb:latest-pg16
     container_name: cnc-mayyanks-postgres-prod
     environment:
       POSTGRES_USER: cnc_mayyanks
-      POSTGRES_PASSWORD: cnc_secret_prod
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: cnc_mayyanks_db
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cnc_mayyanks"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - cnc_network
-    restart: always
 
   redis:
     image: redis:7-alpine
     container_name: cnc-mayyanks-redis-prod
-    ports:
-      - "6379:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis_data_prod:/data
-    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+    restart: unless-stopped
     networks:
       - cnc_network
-    restart: always
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: cnc-mayyanks-zookeeper-prod
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-    networks:
-      - cnc_network
-    restart: always
-
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: cnc-mayyanks-kafka-prod
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    ports:
-      - "9092:9092"
-    networks:
-      - cnc_network
-    restart: always
-
-  mqtt:
-    image: eclipse-mosquitto:2
-    container_name: cnc-mayyanks-mqtt-prod
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-      - mqtt_data_prod:/mosquitto/data
-    networks:
-      - cnc_network
-    restart: always
-
-  # ═══════════════════════════════════════════════════
-  # Application Services
-  # ═══════════════════════════════════════════════════
 
   cnc-mayyanks-api:
     build:
-      context: ../api
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile.backend
     container_name: cnc-mayyanks-api-prod
     environment:
-      - APP_NAME=cnc-mayyanks-api
-      - APP_DOMAIN=cnc.mayyanks.app
-      - DEBUG=false
-      - LOG_LEVEL=INFO
-      - DATABASE_URL=postgresql+asyncpg://cnc_mayyanks:cnc_secret_prod@postgres:5432/cnc_mayyanks_db
-      - REDIS_URL=redis://redis:6379/0
-      - KAFKA_BROKERS=kafka:9092
-      - MQTT_BROKER=mqtt
-      - SECRET_KEY=${SECRET_KEY}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_REDIRECT_URI=https://cnc.mayyanks.app/api/auth/google/callback
-      - CORS_ORIGINS=["https://cnc.mayyanks.app"]
-      - ENABLE_SIMULATOR=true
-    ports:
-      - "8000:8000"
+      NODE_ENV: production
+      PORT: 8000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: cnc_mayyanks
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: cnc_mayyanks_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORS_ORIGINS: https://cnc.mayyanks.app
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      kafka:
-        condition: service_started
-    networks:
-      - cnc_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-    restart: always
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - cnc_network
 
   cnc-mayyanks-frontend:
     build:
@@ -129,158 +73,33 @@ services:
       dockerfile: Dockerfile
     container_name: cnc-mayyanks-frontend-prod
     environment:
-      - NEXT_PUBLIC_API_URL=https://cnc.mayyanks.app/api
-      - NEXT_PUBLIC_WS_URL=wss://cnc.mayyanks.app/ws
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-    ports:
-      - "3000:3000"
+      NEXT_PUBLIC_API_URL: https://cnc.mayyanks.app/api
+      NEXT_PUBLIC_WS_URL: wss://cnc.mayyanks.app/ws
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     depends_on:
       - cnc-mayyanks-api
+    restart: unless-stopped
     networks:
       - cnc_network
-    restart: always
+
+  nginx:
+    image: nginx:alpine
+    container_name: cnc-mayyanks-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../infra/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - cnc-mayyanks-api
+      - cnc-mayyanks-frontend
+    restart: unless-stopped
+    networks:
+      - cnc_network
 
 volumes:
   postgres_data_prod:
   redis_data_prod:
-  mqtt_data_prod:
-
-networks:
-  cnc_network:
-    driver: bridge
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - cnc_network
-    restart: unless-stopped
-
-  # Zookeeper for Kafka
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: cnc-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    networks:
-      - cnc_network
-    restart: unless-stopped
-
-  # Kafka for event streaming
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: cnc-kafka
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    ports:
-      - "9092:9092"
-    networks:
-      - cnc_network
-    restart: unless-stopped
-
-  # MQTT broker for edge devices
-  mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: cnc-mosquitto
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - mosquitto_data:/mosquitto/data
-      - mosquitto_logs:/mosquitto/log
-    networks:
-      - cnc_network
-    restart: unless-stopped
-
-  # Backend API server
-  backend:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.backend
-    container_name: cnc-backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-      timescaledb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-    environment:
-      DATABASE_URL: postgresql+asyncpg://cnc_user:cnc_password@postgres:5432/cnc_db
-      TIMESCALE_URL: postgresql+asyncpg://cnc_user:cnc_password@timescaledb:5432/cnc_timescale
-      REDIS_URL: redis://redis:6379/0
-      KAFKA_BROKERS: kafka:29092
-      MQTT_BROKER: mosquitto
-      MQTT_PORT: 1883
-      DEBUG: "False"
-      LOG_LEVEL: INFO
-      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-prod}
-      CORS_ORIGINS: "http://localhost:3000,http://localhost:8000,http://frontend:3000,http://127.0.0.1:3000"
-      ENABLE_SIMULATOR: "True"
-      SIMULATOR_MACHINE_COUNT: "4"
-    ports:
-      - "8000:8000"
-    volumes:
-      - ../backend:/app
-      - ../backend/models:/app/models
-    networks:
-      - cnc_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Frontend (Next.js)
-  frontend:
-    build:
-      context: ../frontend
-      dockerfile: ../docker/Dockerfile.frontend
-    container_name: cnc-frontend
-    depends_on:
-      - backend
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      NEXT_PUBLIC_WS_URL: ws://localhost:8000
-    ports:
-      - "3000:3000"
-    volumes:
-      - ../frontend:/app
-      - /app/.next
-      - /app/node_modules
-    networks:
-      - cnc_network
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-    driver: local
-  timescale_data:
-    driver: local
-  redis_data:
-    driver: local
-  mosquitto_data:
-    driver: local
-  mosquitto_logs:
-    driver: local
 
 networks:
   cnc_network:

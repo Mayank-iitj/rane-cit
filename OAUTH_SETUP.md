@@ -32,6 +32,7 @@ NEXT_PUBLIC_API_URL=https://cnc.mayyanks.app/api
 GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-YOUR_SECRET_HERE
 GOOGLE_REDIRECT_URI=https://cnc.mayyanks.app/api/auth/google/callback
+JWT_SECRET=YOUR_APP_JWT_SECRET
 ```
 
 ## 🚨 CRITICAL: Google Cloud Console Setup
@@ -119,8 +120,9 @@ cd frontend
 npm run dev
 
 # 2. Start backend
-cd api
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+cd backend
+npm install
+npm run start:dev
 
 # 3. Open browser
 open http://localhost:3000
@@ -133,8 +135,11 @@ open http://localhost:3000
 ## 🚀 Deployment Checklist
 
 - [ ] Google Cloud Console configured with production redirect URIs
+- [ ] Vercel Project Environment has `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+- [ ] Vercel Project Environment has `NEXT_PUBLIC_API_URL=https://cnc.mayyanks.app/api`
 - [ ] `.env.production` deployed to frontend build environment
 - [ ] Backend `.env` has valid `GOOGLE_CLIENT_SECRET`
+- [ ] Backend `.env` has valid `JWT_SECRET`
 - [ ] `BACKEND_API_URL` points to backend service
 - [ ] HTTPS enabled for `cnc.mayyanks.app`
 - [ ] CORS configured to allow `https://cnc.mayyanks.app`
@@ -168,7 +173,7 @@ For issues with Google OAuth setup:
 1. Verify all `.env` files have correct values
 2. Run validation: `python scripts/oauth_config_validator.py`
 3. Check Google Cloud Console redirect URIs match exactly
-4. Review backend logs: `docker logs cnc-mayyanks-backend`
+4. Review backend logs: `docker logs cnc-mayyanks-api`
 5. Check browser DevTools Network tab for request/response details
 
 ## 📚 References
