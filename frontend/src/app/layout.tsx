@@ -1,5 +1,10 @@
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import './globals.css'
+
+const WelcomeScreen = dynamic(() => import('@/components/WelcomeScreen'), {
+  ssr: false,
+})
 
 export const metadata: Metadata = {
   title: 'CNC Intelligence Platform',
@@ -17,7 +22,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <WelcomeScreen />
+        {children}
+      </body>
     </html>
   )
 }
