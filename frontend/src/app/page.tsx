@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { getAuth } from '../lib/api';
+import { getAuth } from './_shared/api';
 
 export default function Home() {
   useEffect(() => {
