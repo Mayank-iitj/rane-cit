@@ -2,10 +2,64 @@
 
 import { ChevronRight, Zap, TrendingUp, Cpu, BarChart3, Settings, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+  const [showWelcome, setShowWelcome] = useState(() => {
+    const seenKey = 'cnc_mayyanks_welcome_seen'
+
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    const hasSeen = window.sessionStorage.getItem(seenKey)
+    if (hasSeen) {
+      return false
+    }
+
+    window.sessionStorage.setItem(seenKey, '1')
+    return true
+  })
+
+  useEffect(() => {
+    if (!showWelcome) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowWelcome(false)
+    }, 3600)
+
+    return () => window.clearTimeout(timer)
+  }, [showWelcome])
+
   return (
     <div className="bg-white">
+      {showWelcome && (
+        <div className="welcome-overlay" role="status" aria-live="polite">
+          <div className="welcome-card">
+            <div className="welcome-lottie-wrap" aria-hidden="true">
+              <DotLottieReact
+                src="/loading.lottie"
+                autoplay
+                loop
+              />
+            </div>
+            <p className="welcome-kicker">System Init</p>
+            <h2 className="welcome-title">Engine Rebooting</h2>
+            <p className="welcome-subtitle">Synchronizing machine intelligence cores</p>
+            <button
+              type="button"
+              className="welcome-skip"
+              onClick={() => setShowWelcome(false)}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
         <div className="container-max flex items-center justify-between py-6">
