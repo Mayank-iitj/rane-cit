@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Home() {
   return (
     <main className="login-page">
@@ -9,12 +11,12 @@ export default function Home() {
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <a className="btn btn-primary" href="/login" style={{ textDecoration: 'none' }}>
-            Sign In
-          </a>
-          <a className="btn btn-secondary" href="/dashboard" style={{ textDecoration: 'none' }}>
+          <Link href="/dashboard" className="btn btn-primary" style={{ textDecoration: 'none' }}>
             Open Dashboard
-          </a>
+          </Link>
+          <Link href="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+            Sign In
+          </Link>
         </div>
       </div>
     </main>

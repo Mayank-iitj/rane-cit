@@ -153,7 +153,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!auth.isAuthenticated) { window.location.href = '/login'; return; }
+    // No authentication required - allow guest access
     queueMicrotask(() => {
       void fetchData();
     });
@@ -172,7 +172,7 @@ export default function DashboardPage() {
     return () => { clearInterval(interval); ws?.close(); };
   }, [auth.isAuthenticated, fetchData]);
 
-  const handleLogout = () => { clearAuth(); window.location.href = '/login'; };
+  const handleLogout = () => { clearAuth(); window.location.href = '/'; };
 
   const handleCopilotSend = async () => {
     if (!copilotInput.trim()) return;

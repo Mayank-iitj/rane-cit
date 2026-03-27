@@ -27,8 +27,17 @@ interface WebSocketMessage {
   data: unknown;
 }
 
+// Default anonymous user (no login required)
+const ANONYMOUS_USER: User = {
+  id: 'anonymous',
+  email: 'guest@cnc.mayyanks.app',
+  name: 'Guest User',
+  role: 'viewer',
+  org_id: 'public',
+};
+
 let authState: AuthState = {
-  user: null,
+  user: ANONYMOUS_USER,
   accessToken: null,
   refreshToken: null,
   isAuthenticated: false,
@@ -39,6 +48,14 @@ export function getAuth(): AuthState {
     const stored = localStorage.getItem('cnc_mayyanks_auth');
     if (stored) {
       authState = JSON.parse(stored) as AuthState;
+    } else {
+      // Maintain anonymous access if no stored auth
+      authState = {
+        user: ANONYMOUS_USER,
+        accessToken: null,
+        refreshToken: null,
+        isAuthenticated: false,
+      };
     }
   }
   return authState;
@@ -92,10 +109,7 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<Respon
       }
     }
 
-    clearAuth();
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
+    // No login redirect - allow anonymous access to continue
   }
 
   return res;
