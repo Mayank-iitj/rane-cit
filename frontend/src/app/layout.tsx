@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://cnc.mayyanks.app'),
   title: 'cnc.mayyanks.app — CNC Intelligence Platform',
   description: 'Real-time CNC Intelligence & Predictive Automation Platform — cnc.mayyanks.app',
   keywords: 'CNC, intelligence, predictive maintenance, manufacturing, IoT, Industry 4.0',

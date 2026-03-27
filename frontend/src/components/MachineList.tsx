@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Clock, Zap } from 'lucide-react'
+import { Clock, Zap } from 'lucide-react'
 
 interface Machine {
   id: number

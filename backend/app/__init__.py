@@ -1,0 +1,1 @@
+# CNC Intelligence Platform - Backend Application

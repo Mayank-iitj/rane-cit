@@ -39,22 +39,99 @@ const navItems = [
   { id: 'settings', label: 'Settings', icon: icons.settings, section: 'system' },
 ];
 
+interface FleetData {
+  total_machines: number;
+  running_count: number;
+  fleet_utilization: number;
+  active_alerts: number;
+  total_energy_kwh: number;
+}
+
+interface MachineData {
+  id: string;
+  name: string;
+  status: string;
+  protocol: string;
+  model?: string;
+  manufacturer?: string;
+  location?: string;
+}
+
+interface AlertData {
+  id: string;
+  severity: string;
+  type: string;
+  title: string;
+  machine_id?: string;
+  is_acknowledged: boolean;
+}
+
+interface AlertStats {
+  total: number;
+  critical: number;
+  warning: number;
+  unacknowledged: number;
+}
+
+interface OEEData {
+  machine_name: string;
+  availability: number;
+  performance: number;
+  quality: number;
+  oee: number;
+}
+
+interface EnergyData {
+  machine_name: string;
+  total_kwh: number;
+  avg_power_w: number;
+  peak_power_w: number;
+  cost_estimate: number;
+  efficiency_score: number;
+}
+
+interface LiveTelemetry {
+  machine_name: string;
+  spindle_speed?: number;
+  temperature?: number;
+  vibration?: number;
+  load_percent?: number;
+}
+
+interface CopilotMessage {
+  role: 'assistant' | 'user';
+  text: string;
+  actions?: string[];
+}
+
+interface TwinState {
+  machine_name: string;
+  status: string;
+  health_score: number;
+  spindle_speed_rpm?: number;
+  spindle_temperature_c?: number;
+  vibration_mm_s?: number;
+  tool_wear_percent?: number;
+  power_consumption_w?: number;
+  coolant_flow_lpm?: number;
+  tool_life_remaining_min?: number;
+}
+
 // ═══════════════════════════════════════════════════
 // Main Dashboard App
 // ═══════════════════════════════════════════════════
 export default function DashboardPage() {
   const [activePage, setActivePage] = useState('dashboard');
-  const [fleet, setFleet] = useState<any>(null);
-  const [machines, setMachines] = useState<any[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [alertStats, setAlertStats] = useState<any>(null);
-  const [oee, setOEE] = useState<any[]>([]);
-  const [energy, setEnergy] = useState<any[]>([]);
-  const [liveData, setLiveData] = useState<any[]>([]);
-  const [copilotMessages, setCopilotMessages] = useState<any[]>([{ role: 'assistant', text: "I'm the cnc.mayyanks.app AI Copilot. Ask me about your machines, predictions, or optimizations." }]);
+  const [fleet, setFleet] = useState<FleetData | null>(null);
+  const [machines, setMachines] = useState<MachineData[]>([]);
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [alertStats, setAlertStats] = useState<AlertStats | null>(null);
+  const [oee, setOEE] = useState<OEEData[]>([]);
+  const [energy, setEnergy] = useState<EnergyData[]>([]);
+  const [liveData, setLiveData] = useState<LiveTelemetry[]>([]);
+  const [copilotMessages, setCopilotMessages] = useState<CopilotMessage[]>([{ role: 'assistant', text: "I'm the cnc.mayyanks.app AI Copilot. Ask me about your machines, predictions, or optimizations." }]);
   const [copilotInput, setCopilotInput] = useState('');
-  const [twinState, setTwinState] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [twinState, setTwinState] = useState<TwinState | null>(null);
 
   const auth = getAuth();
 
@@ -72,28 +149,28 @@ export default function DashboardPage() {
       if (energyRes.ok) setEnergy(await energyRes.json());
     } catch (e) {
       console.error('Fetch error:', e);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     if (!auth.isAuthenticated) { window.location.href = '/login'; return; }
-    fetchData();
+    queueMicrotask(() => {
+      void fetchData();
+    });
     const interval = setInterval(fetchData, 30000);
 
     // WebSocket
     const ws = connectWebSocket((msg) => {
       if (msg.channel === 'telemetry:new') {
-        setLiveData(prev => [...prev.slice(-50), msg.data]);
+        setLiveData(prev => [...prev.slice(-50), msg.data as LiveTelemetry]);
       }
       if (msg.channel === 'alert:triggered') {
-        setAlerts(prev => [msg.data, ...prev.slice(0, 49)]);
+        setAlerts(prev => [msg.data as AlertData, ...prev.slice(0, 49)]);
       }
     });
 
     return () => { clearInterval(interval); ws?.close(); };
-  }, []);
+  }, [auth.isAuthenticated, fetchData]);
 
   const handleLogout = () => { clearAuth(); window.location.href = '/login'; };
 
@@ -118,7 +195,6 @@ export default function DashboardPage() {
 
   // ═══════ RENDER ═══════
   const renderSection = (title: string) => <div className="nav-section">{title}</div>;
-  let currentSection = '';
 
   return (
     <div className="app-layout">
@@ -132,9 +208,9 @@ export default function DashboardPage() {
           </div>
         </div>
         <nav className="sidebar-nav">
-          {navItems.map(item => {
-            const showSection = item.section !== currentSection;
-            currentSection = item.section;
+          {navItems.map((item, index) => {
+            const previousSection = index > 0 ? navItems[index - 1].section : null;
+            const showSection = item.section !== previousSection;
             return (
               <div key={item.id}>
                 {showSection && renderSection(item.section)}

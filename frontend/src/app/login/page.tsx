@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { setAuth } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleGoogleLogin = () => {
     setLoading(true);
@@ -44,8 +42,6 @@ export default function LoginPage() {
             <span>⚡ Fleet Intelligence</span>
           </div>
         </div>
-
-        {error && <div className="login-error">{error}</div>}
 
         {/* Google Sign-In — Primary & Only Auth */}
         <button

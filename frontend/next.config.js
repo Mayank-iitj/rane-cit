@@ -2,8 +2,10 @@
 const nextConfig = {
   output: 'standalone',
   images: { unoptimized: true },
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
+  turbopack: {
+    root: __dirname,
+  },
   async headers() {
     return [
       {
