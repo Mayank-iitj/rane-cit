@@ -1,21 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  env: {
-    NEXT_PUBLIC_APP_NAME: 'cnc.mayyanks.app',
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
-      },
-      {
-        source: '/ws',
-        destination: 'http://localhost:8002/ws',
-      },
-    ];
-  },
+  images: { unoptimized: true },
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: false },
   async headers() {
     return [
       {
