@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bg-primary: #0a0e1a;
   --bg-secondary: #111827;
@@ -33,6 +37,11 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 /* ═══ Scrollbar ═══ */
@@ -577,4 +586,117 @@ tr:last-child td { border-bottom: none; }
   .main-content { margin-left: 0; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ═══ Landing Page Utilities ═══ */
+.container-max {
+  width: min(1200px, 92%);
+  margin-inline: auto;
+}
+
+.section-spacing {
+  padding: clamp(3.5rem, 8vw, 7rem) 0;
+}
+
+.hero-text {
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.section-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #0891b2, #0284c7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.divider-accent {
+  width: 64px;
+  height: 6px;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, #06b6d4, #22d3ee);
+}
+
+.dark-section {
+  background: radial-gradient(circle at 20% 20%, #1e293b 0%, #0f172a 45%, #020617 100%);
+  color: #e2e8f0;
+}
+
+.dark-section .section-title {
+  color: #f8fafc;
+}
+
+.grid-cols-services {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.card-platform {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 10px 25px rgba(2, 6, 23, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-platform:hover {
+  transform: translateY(-3px);
+  border-color: #67e8f9;
+  box-shadow: 0 16px 36px rgba(2, 132, 199, 0.12);
+}
+
+.service-number {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: #06b6d4;
+}
+
+.button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.35rem;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ecfeff;
+  background: linear-gradient(135deg, #0891b2, #0369a1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.button-primary:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.15);
+  box-shadow: 0 12px 24px rgba(3, 105, 161, 0.28);
+}
+
+@media (max-width: 1024px) {
+  .grid-cols-services {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-cols-services {
+    grid-template-columns: 1fr;
+  }
 }
