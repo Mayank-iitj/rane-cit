@@ -26,5 +26,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     prompt: 'consent',
   });
 
-  return NextResponse.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`);
+  const response = NextResponse.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`);
+  response.cookies.set('cnc_oauth_state', state, {
+    httpOnly: true,
+    secure: request.nextUrl.protocol === 'https:',
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/',
+  });
+
+  return response;
 }

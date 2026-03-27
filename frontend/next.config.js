@@ -6,6 +6,27 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  async rewrites() {
+    const backendBase =
+      process.env.BACKEND_API_URL ||
+      process.env.API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL;
+
+    if (!backendBase || backendBase.startsWith('/')) {
+      return [];
+    }
+
+    const normalized = backendBase.replace(/\/$/, '');
+
+    return {
+      fallback: [
+        {
+          source: '/api/:path*',
+          destination: `${normalized}/:path*`,
+        },
+      ],
+    };
+  },
   async headers() {
     return [
       {
