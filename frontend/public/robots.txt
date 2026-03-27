@@ -1,4 +1,5 @@
 # cnc.mayyanks.app — Robots.txt
+# Primary SEO keyword: cnc intelligence
 User-agent: *
 Allow: /
 Disallow: /api/
