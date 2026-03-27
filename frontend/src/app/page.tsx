@@ -97,6 +97,9 @@ export default function Home() {
               <Link href="/dashboard" className="button-primary">
                 EXPLORE DASHBOARD
               </Link>
+              <Link href="/dashboard?workflow=1" className="button-secondary">
+                <Zap className="w-5 h-5" /> RUN WORKFLOW
+              </Link>
             </div>
 
             {/* Stats */}
@@ -248,9 +251,14 @@ export default function Home() {
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
             Start exploring the dashboard immediately. No signup required. Full access to all features.
           </p>
-          <Link href="/dashboard" className="inline-flex items-center gap-2 button-primary">
-            OPEN DASHBOARD <ChevronRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/dashboard" className="inline-flex items-center gap-2 button-primary">
+              OPEN DASHBOARD <ChevronRight className="w-5 h-5" />
+            </Link>
+            <Link href="/dashboard?workflow=1" className="inline-flex items-center gap-2 button-secondary">
+              <Zap className="w-5 h-5" /> RUN JUDGE WORKFLOW
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -278,7 +286,7 @@ export default function Home() {
             <div>
               <p className="font-bold text-white mb-4">CONTACT</p>
               <ul className="text-sm space-y-2">
-                <li>support@cnc.mayyanks.app</li>
+                <li>admin@mayankiitj.in</li>
               </ul>
             </div>
           </div>

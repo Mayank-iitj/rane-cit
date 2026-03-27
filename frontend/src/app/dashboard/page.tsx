@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { api, getAuth, clearAuth, connectWebSocket } from '../_shared/api';
 
 const icons = {
@@ -13,6 +14,7 @@ const icons = {
   twin: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z",
   settings: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M12 6v6l4 2",
   api: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71",
+  back: "M15 18l-6-6 6-6 M9 12h12",
   logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9",
   zap: "M13 2L3 14h9l-1 8 10-12h-9l1-8",
 };
@@ -39,6 +41,56 @@ const navItems = [
   { id: 'api', label: 'API Explorer', icon: icons.api, section: 'developer' },
   { id: 'settings', label: 'Settings', icon: icons.settings, section: 'system' },
 ];
+
+const WORKFLOW_SEQUENCE = ['dashboard', 'machines', 'analytics', 'alerts', 'copilot', 'twin', 'api'];
+
+const SECTION_GUIDE: Record<string, { title: string; caption: string; icon: string }> = {
+  dashboard: {
+    title: 'Mission Control',
+    caption: 'Live fleet pulse, throughput, and risk posture for judges in one frame.',
+    icon: icons.dashboard,
+  },
+  machines: {
+    title: 'Machine Command Grid',
+    caption: 'Tap any machine row to open its twin and drill into its operating condition.',
+    icon: icons.machines,
+  },
+  analytics: {
+    title: 'Production Intelligence',
+    caption: 'OEE and energy evidence for measurable business impact.',
+    icon: icons.chart,
+  },
+  alerts: {
+    title: 'Predictive Alert Desk',
+    caption: 'Actionable alerts prioritized for operational safety and uptime.',
+    icon: icons.alert,
+  },
+  gcode: {
+    title: 'Program Optimizer',
+    caption: 'Analyze and optimize toolpaths to reduce cycle time and wear.',
+    icon: icons.code,
+  },
+  copilot: {
+    title: 'Judge Copilot',
+    caption: 'One-click preset answers for judges with explainable recommendations.',
+    icon: icons.brain,
+  },
+  twin: {
+    title: 'Digital Twin Lens',
+    caption: 'High-fidelity machine state for instant diagnostics and decisions.',
+    icon: icons.twin,
+  },
+  api: {
+    title: 'Developer Surface',
+    caption: 'Trace every capability to concrete API endpoints and integrations.',
+    icon: icons.api,
+  },
+  settings: {
+    title: 'Control Settings',
+    caption: 'Profile and platform configuration details for deployment context.',
+    icon: icons.settings,
+  },
+};
 
 interface FleetData {
   total_machines: number;
@@ -203,8 +255,10 @@ const COPILOT_PRESET_QNA: CopilotPreset[] = [
 // Main Dashboard App
 // ═══════════════════════════════════════════════════
 export default function DashboardPage() {
+  const router = useRouter();
   const DEMO_MODE = true;
-  const [activePage, setActivePage] = useState('dashboard');
+  const startsInWorkflowMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('workflow') === '1';
+  const [activePage, setActivePage] = useState(startsInWorkflowMode ? WORKFLOW_SEQUENCE[0] : 'dashboard');
   const [fleet, setFleet] = useState<FleetData | null>(DEMO_FLEET);
   const [machines, setMachines] = useState<MachineData[]>(DEMO_MACHINES);
   const [alerts, setAlerts] = useState<AlertData[]>(DEMO_ALERTS);
@@ -217,6 +271,10 @@ export default function DashboardPage() {
   ]);
   const [copilotInput, setCopilotInput] = useState('');
   const [twinState, setTwinState] = useState<TwinState | null>(DEMO_TWIN_STATES[DEMO_MACHINES[0].id]);
+  const [workflowRunning, setWorkflowRunning] = useState(startsInWorkflowMode);
+  const [workflowStep, setWorkflowStep] = useState(0);
+  const [workflowLoop, setWorkflowLoop] = useState(startsInWorkflowMode ? 1 : 0);
+  const [selectedMachineId, setSelectedMachineId] = useState(DEMO_MACHINES[0].id);
 
   const auth = getAuth();
 
@@ -279,6 +337,13 @@ export default function DashboardPage() {
   }, [DEMO_MODE, auth.isAuthenticated, fetchData]);
 
   const handleLogout = () => { clearAuth(); window.location.href = '/'; };
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push('/');
+  };
 
   const handlePresetQuestion = (preset: CopilotPreset) => {
     setCopilotMessages(prev => [
@@ -288,7 +353,7 @@ export default function DashboardPage() {
     ]);
   };
 
-  const loadTwin = async (machineId: string) => {
+  const loadTwin = useCallback(async (machineId: string) => {
     if (DEMO_MODE) {
       setTwinState(DEMO_TWIN_STATES[machineId] || null);
       return;
@@ -300,6 +365,61 @@ export default function DashboardPage() {
     } else {
       setTwinState(DEMO_TWIN_STATES[machineId] || null);
     }
+  }, [DEMO_MODE]);
+
+  const stopWorkflowAndNavigate = useCallback((page: string) => {
+    setWorkflowRunning(false);
+    setActivePage(page);
+    setWorkflowLoop((prev) => prev + 1);
+  }, []);
+
+  const openMachineTwin = useCallback((machineId?: string) => {
+    if (!machineId) {
+      return;
+    }
+    setSelectedMachineId(machineId);
+    stopWorkflowAndNavigate('twin');
+    void loadTwin(machineId);
+  }, [loadTwin, stopWorkflowAndNavigate]);
+
+  const getMachineIdByName = useCallback((machineName: string) => {
+    return machines.find((m) => m.name === machineName)?.id;
+  }, [machines]);
+
+  useEffect(() => {
+    if (!workflowRunning) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setWorkflowStep((prev) => {
+        const nextStep = prev + 1;
+
+        if (nextStep >= WORKFLOW_SEQUENCE.length) {
+          setWorkflowRunning(false);
+          setActivePage('dashboard');
+          setWorkflowLoop((loop) => loop + 1);
+          return 0;
+        }
+
+        const nextPage = WORKFLOW_SEQUENCE[nextStep];
+        setActivePage(nextPage);
+        if (nextPage === 'twin') {
+          void loadTwin(selectedMachineId);
+        }
+        setWorkflowLoop((loop) => loop + 1);
+        return nextStep;
+      });
+    }, 2600);
+
+    return () => window.clearTimeout(timer);
+  }, [loadTwin, selectedMachineId, workflowRunning, workflowStep]);
+
+  const startWorkflow = () => {
+    setWorkflowStep(0);
+    setWorkflowRunning(true);
+    setActivePage(WORKFLOW_SEQUENCE[0]);
+    setWorkflowLoop((prev) => prev + 1);
   };
 
   // ═══════ RENDER ═══════
@@ -323,7 +443,7 @@ export default function DashboardPage() {
             return (
               <div key={item.id}>
                 {showSection && renderSection(item.section)}
-                <div className={`nav-link ${activePage === item.id ? 'active' : ''}`} onClick={() => setActivePage(item.id)}>
+                <div className={`nav-link ${activePage === item.id ? 'active' : ''}`} onClick={() => stopWorkflowAndNavigate(item.id)}>
                   <Icon d={item.icon} />
                   {item.label}
                 </div>
@@ -341,22 +461,58 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="main-content">
         <header className="topbar">
-          <h2 className="topbar-title">{navItems.find(n => n.id === activePage)?.label || 'Dashboard'}</h2>
+          <div className="topbar-actions" style={{ gap: '0.55rem' }}>
+            <button className="btn btn-secondary" onClick={handleBack}>
+              <Icon d={icons.back} /> Back
+            </button>
+            <h2 className="topbar-title">{navItems.find(n => n.id === activePage)?.label || 'Dashboard'}</h2>
+          </div>
           <div className="topbar-actions">
+            <button className="btn btn-primary workflow-run-btn" onClick={startWorkflow}>
+              <Icon d={icons.zap} />
+              {workflowRunning ? 'Workflow Running' : 'Run Workflow'}
+            </button>
+            {workflowRunning && (
+              <span className="badge badge-blue workflow-stage-badge">
+                Stage {Math.min(workflowStep + 1, WORKFLOW_SEQUENCE.length)} / {WORKFLOW_SEQUENCE.length}
+              </span>
+            )}
             <span className="badge badge-green">LIVE</span>
             <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{auth.user?.email}</span>
           </div>
         </header>
 
-        <div className="page-content animate-fade-in">
+        {workflowRunning && (
+          <div className="workflow-progress-wrap" role="status" aria-live="polite">
+            <div className="workflow-progress-label">
+              Judge Demo Workflow: {navItems.find((n) => n.id === activePage)?.label || 'Dashboard'}
+            </div>
+            <div className="workflow-progress-track">
+              <div
+                className="workflow-progress-fill"
+                style={{ width: `${((Math.min(workflowStep + 1, WORKFLOW_SEQUENCE.length)) / WORKFLOW_SEQUENCE.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div key={`${activePage}-${workflowLoop}`} className="page-content page-transition">
+          <div className="section-guide-card">
+            <div className="section-guide-icon"><Icon d={(SECTION_GUIDE[activePage] || SECTION_GUIDE.dashboard).icon} /></div>
+            <div>
+              <p className="section-guide-title">{(SECTION_GUIDE[activePage] || SECTION_GUIDE.dashboard).title}</p>
+              <p className="section-guide-caption">{(SECTION_GUIDE[activePage] || SECTION_GUIDE.dashboard).caption}</p>
+            </div>
+          </div>
+
           {/* ═══ Dashboard ═══ */}
           {activePage === 'dashboard' && (
             <>
               <div className="stats-grid">
-                <div className="stat-card"><div className="stat-label">Total Machines</div><div className="stat-value">{fleet?.total_machines || 0}</div><div className="stat-change up">↑ {fleet?.running_count || 0} running</div></div>
-                <div className="stat-card"><div className="stat-label">Fleet Utilization</div><div className="stat-value">{fleet?.fleet_utilization || 0}%</div></div>
-                <div className="stat-card"><div className="stat-label">Active Alerts</div><div className="stat-value" style={{ WebkitTextFillColor: (fleet?.active_alerts || 0) > 0 ? '#ef4444' : undefined }}>{fleet?.active_alerts || 0}</div></div>
-                <div className="stat-card"><div className="stat-label">Energy (24h)</div><div className="stat-value">{fleet?.total_energy_kwh || 0} kWh</div></div>
+                <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('machines')}><div className="stat-label">Total Machines</div><div className="stat-value">{fleet?.total_machines || 0}</div><div className="stat-change up">↑ {fleet?.running_count || 0} running</div></button>
+                <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('analytics')}><div className="stat-label">Fleet Utilization</div><div className="stat-value">{fleet?.fleet_utilization || 0}%</div></button>
+                <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('alerts')}><div className="stat-label">Active Alerts</div><div className="stat-value" style={{ WebkitTextFillColor: (fleet?.active_alerts || 0) > 0 ? '#ef4444' : undefined }}>{fleet?.active_alerts || 0}</div></button>
+                <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('analytics')}><div className="stat-label">Energy (24h)</div><div className="stat-value">{fleet?.total_energy_kwh || 0} kWh</div></button>
               </div>
 
               <div className="grid-2">
@@ -367,7 +523,7 @@ export default function DashboardPage() {
                       <thead><tr><th>Machine</th><th>Status</th><th>Protocol</th></tr></thead>
                       <tbody>
                         {machines.map(m => (
-                          <tr key={m.id}><td><span className={`status-dot ${m.status}`} />{m.name}</td><td><span className={`badge badge-${m.status === 'running' ? 'green' : m.status === 'idle' ? 'yellow' : 'red'}`}>{m.status}</span></td><td>{m.protocol}</td></tr>
+                          <tr key={m.id} className="clickable-row" onClick={() => openMachineTwin(m.id)}><td><span className={`status-dot ${m.status}`} />{m.name}</td><td><span className={`badge badge-${m.status === 'running' ? 'green' : m.status === 'idle' ? 'yellow' : 'red'}`}>{m.status}</span></td><td>{m.protocol}</td></tr>
                         ))}
                         {machines.length === 0 && <tr><td colSpan={3} style={{ color: '#64748b', textAlign: 'center' }}>No machines. Start the API server to see demo data.</td></tr>}
                       </tbody>
@@ -377,10 +533,10 @@ export default function DashboardPage() {
                 <div className="card">
                   <div className="card-header"><span className="card-title">Recent Alerts</span></div>
                   {alerts.slice(0, 8).map((a, i) => (
-                    <div key={i} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <button type="button" key={i} className="clickable-inline" style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }} onClick={() => stopWorkflowAndNavigate('alerts')}>
                       <span className={`badge badge-${a.severity === 'critical' ? 'red' : a.severity === 'warning' ? 'yellow' : 'blue'}`}>{a.severity}</span>
                       <span style={{ fontSize: '0.85rem' }}>{a.title}</span>
-                    </div>
+                    </button>
                   ))}
                   {alerts.length === 0 && <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No alerts</p>}
                 </div>
@@ -394,7 +550,7 @@ export default function DashboardPage() {
                       <thead><tr><th>Machine</th><th>Spindle RPM</th><th>Temp °C</th><th>Vibration</th><th>Load %</th></tr></thead>
                       <tbody>
                         {liveData.slice(-8).reverse().map((d, i) => (
-                          <tr key={i}><td>{d.machine_name}</td><td>{d.spindle_speed?.toFixed(0)}</td><td>{d.temperature?.toFixed(1)}</td><td>{d.vibration?.toFixed(3)}</td><td>{d.load_percent?.toFixed(1)}</td></tr>
+                          <tr key={i} className="clickable-row" onClick={() => openMachineTwin(getMachineIdByName(d.machine_name))}><td>{d.machine_name}</td><td>{d.spindle_speed?.toFixed(0)}</td><td>{d.temperature?.toFixed(1)}</td><td>{d.vibration?.toFixed(3)}</td><td>{d.load_percent?.toFixed(1)}</td></tr>
                         ))}
                       </tbody>
                     </table>
@@ -412,7 +568,7 @@ export default function DashboardPage() {
                   <thead><tr><th>Name</th><th>Model</th><th>Manufacturer</th><th>Status</th><th>Location</th><th>Protocol</th></tr></thead>
                   <tbody>
                     {machines.map(m => (
-                      <tr key={m.id}>
+                      <tr key={m.id} className="clickable-row" onClick={() => openMachineTwin(m.id)}>
                         <td><strong>{m.name}</strong></td>
                         <td>{m.model || '—'}</td>
                         <td>{m.manufacturer || '—'}</td>
@@ -436,7 +592,7 @@ export default function DashboardPage() {
                   <thead><tr><th>Machine</th><th>Availability</th><th>Performance</th><th>Quality</th><th>OEE</th></tr></thead>
                   <tbody>
                     {oee.map((o, i) => (
-                      <tr key={i}><td>{o.machine_name}</td><td>{o.availability}%</td><td>{o.performance}%</td><td>{o.quality}%</td><td><strong style={{ color: o.oee > 70 ? '#34d399' : o.oee > 50 ? '#fbbf24' : '#ef4444' }}>{o.oee}%</strong></td></tr>
+                      <tr key={i} className="clickable-row" onClick={() => openMachineTwin(getMachineIdByName(o.machine_name))}><td>{o.machine_name}</td><td>{o.availability}%</td><td>{o.performance}%</td><td>{o.quality}%</td><td><strong style={{ color: o.oee > 70 ? '#34d399' : o.oee > 50 ? '#fbbf24' : '#ef4444' }}>{o.oee}%</strong></td></tr>
                     ))}
                   </tbody>
                 </table>
@@ -447,7 +603,7 @@ export default function DashboardPage() {
                   <thead><tr><th>Machine</th><th>Total kWh</th><th>Avg Power W</th><th>Peak W</th><th>Cost $</th><th>Efficiency</th></tr></thead>
                   <tbody>
                     {energy.map((e, i) => (
-                      <tr key={i}><td>{e.machine_name}</td><td>{e.total_kwh}</td><td>{e.avg_power_w}</td><td>{e.peak_power_w}</td><td>${e.cost_estimate}</td><td>{e.efficiency_score}%</td></tr>
+                      <tr key={i} className="clickable-row" onClick={() => openMachineTwin(getMachineIdByName(e.machine_name))}><td>{e.machine_name}</td><td>{e.total_kwh}</td><td>{e.avg_power_w}</td><td>{e.peak_power_w}</td><td>${e.cost_estimate}</td><td>{e.efficiency_score}%</td></tr>
                     ))}
                   </tbody>
                 </table>
@@ -471,7 +627,7 @@ export default function DashboardPage() {
                   <thead><tr><th>Severity</th><th>Type</th><th>Title</th><th>Machine</th><th>Ack</th><th>Action</th></tr></thead>
                   <tbody>
                     {alerts.map((a, i) => (
-                      <tr key={i}>
+                      <tr key={i} className="clickable-row" onClick={() => openMachineTwin(a.machine_id)}>
                         <td><span className={`badge badge-${a.severity === 'critical' ? 'red' : a.severity === 'warning' ? 'yellow' : 'blue'}`}>{a.severity}</span></td>
                         <td>{a.type}</td>
                         <td>{a.title}</td>
@@ -567,20 +723,20 @@ export default function DashboardPage() {
             <>
               <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {machines.map(m => (
-                  <button key={m.id} className="btn btn-secondary" onClick={() => loadTwin(m.id)}>{m.name}</button>
+                  <button key={m.id} className="btn btn-secondary" onClick={() => { setSelectedMachineId(m.id); void loadTwin(m.id); }}>{m.name}</button>
                 ))}
               </div>
               {twinState ? (
                 <div className="grid-3">
-                  <div className="stat-card"><div className="stat-label">Machine</div><div className="stat-value" style={{ fontSize: '1.2rem' }}>{twinState.machine_name}</div><div className="stat-change">{twinState.status}</div></div>
-                  <div className="stat-card"><div className="stat-label">Health Score</div><div className="stat-value" style={{ WebkitTextFillColor: twinState.health_score > 80 ? '#34d399' : twinState.health_score > 50 ? '#fbbf24' : '#ef4444' }}>{twinState.health_score}%</div></div>
-                  <div className="stat-card"><div className="stat-label">Spindle RPM</div><div className="stat-value">{twinState.spindle_speed_rpm?.toFixed(0)}</div></div>
-                  <div className="stat-card"><div className="stat-label">Temperature</div><div className="stat-value">{twinState.spindle_temperature_c?.toFixed(1)}°C</div></div>
-                  <div className="stat-card"><div className="stat-label">Vibration</div><div className="stat-value">{twinState.vibration_mm_s?.toFixed(3)}</div></div>
-                  <div className="stat-card"><div className="stat-label">Tool Wear</div><div className="stat-value">{twinState.tool_wear_percent?.toFixed(1)}%</div></div>
-                  <div className="stat-card"><div className="stat-label">Power</div><div className="stat-value">{twinState.power_consumption_w?.toFixed(0)}W</div></div>
-                  <div className="stat-card"><div className="stat-label">Coolant Flow</div><div className="stat-value">{twinState.coolant_flow_lpm?.toFixed(1)} L/m</div></div>
-                  <div className="stat-card"><div className="stat-label">Tool Life</div><div className="stat-value">{twinState.tool_life_remaining_min?.toFixed(0)} min</div></div>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('machines')}><div className="stat-label">Machine</div><div className="stat-value" style={{ fontSize: '1.2rem' }}>{twinState.machine_name}</div><div className="stat-change">{twinState.status}</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('alerts')}><div className="stat-label">Health Score</div><div className="stat-value" style={{ WebkitTextFillColor: twinState.health_score > 80 ? '#34d399' : twinState.health_score > 50 ? '#fbbf24' : '#ef4444' }}>{twinState.health_score}%</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('analytics')}><div className="stat-label">Spindle RPM</div><div className="stat-value">{twinState.spindle_speed_rpm?.toFixed(0)}</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('analytics')}><div className="stat-label">Temperature</div><div className="stat-value">{twinState.spindle_temperature_c?.toFixed(1)}°C</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('analytics')}><div className="stat-label">Vibration</div><div className="stat-value">{twinState.vibration_mm_s?.toFixed(3)}</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('alerts')}><div className="stat-label">Tool Wear</div><div className="stat-value">{twinState.tool_wear_percent?.toFixed(1)}%</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('analytics')}><div className="stat-label">Power</div><div className="stat-value">{twinState.power_consumption_w?.toFixed(0)}W</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('analytics')}><div className="stat-label">Coolant Flow</div><div className="stat-value">{twinState.coolant_flow_lpm?.toFixed(1)} L/m</div></button>
+                  <button type="button" className="stat-card clickable-tile" onClick={() => stopWorkflowAndNavigate('alerts')}><div className="stat-label">Tool Life</div><div className="stat-value">{twinState.tool_life_remaining_min?.toFixed(0)} min</div></button>
                 </div>
               ) : (
                 <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -644,11 +800,22 @@ export default function DashboardPage() {
                 <div key={section} style={{ marginBottom: '1.5rem' }}>
                   <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: '#22d3ee', marginBottom: '0.5rem' }}>{section}</h3>
                   {endpoints.map(({ m, p, d }) => (
-                    <div key={p} className="api-endpoint">
+                    <button
+                      type="button"
+                      key={`${section}-${m}-${p}`}
+                      className="api-endpoint"
+                      onClick={() => {
+                        stopWorkflowAndNavigate('copilot');
+                        setCopilotMessages((prev) => [
+                          ...prev,
+                          { role: 'assistant', text: `Selected endpoint: ${m} ${p}. ${d}` },
+                        ]);
+                      }}
+                    >
                       <span className={`api-method ${m.toLowerCase()}`}>{m}</span>
                       <span className="api-path">{p}</span>
                       <span className="api-desc">{d}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               ))}
