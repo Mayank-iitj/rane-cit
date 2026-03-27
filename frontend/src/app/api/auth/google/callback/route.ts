@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 function redirectWithError(request: NextRequest, code: string): NextResponse {
-  const url = new URL('/auth/callback', request.nextUrl.origin);
+  const url = new URL('/login', request.nextUrl.origin);
   url.searchParams.set('error', code);
   return NextResponse.redirect(url.toString());
 }

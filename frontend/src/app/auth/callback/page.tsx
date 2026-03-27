@@ -6,20 +6,53 @@ import { setAuth } from '../../_shared/api';
 export default function AuthCallback() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token');
     const isNew = params.get('new_user') === 'True';
 
-    if (accessToken && refreshToken) {
+    if (error) {
+      window.location.href = `/login?error=${encodeURIComponent(error)}`;
+      return;
+    }
+
+    const completeLogin = async () => {
+      if (!accessToken || !refreshToken) {
+        window.location.href = '/login?error=oauth_failed';
+        return;
+      }
+
+      let user = { id: '', email: '', name: '', role: 'admin', org_id: '' };
+      try {
+        const meRes = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: 'no-store',
+        });
+
+        if (meRes.ok) {
+          const me = await meRes.json();
+          user = {
+            id: me.id || '',
+            email: me.email || '',
+            name: me.full_name || me.name || '',
+            role: me.role || 'admin',
+            org_id: me.org_id || '',
+          };
+        }
+      } catch {
+        // Keep fallback user payload so sign-in can still complete.
+      }
+
       setAuth({
         access_token: accessToken,
         refresh_token: refreshToken,
-        user: { id: '', email: '', name: '', role: 'admin', org_id: '' },
+        user,
       });
+
       window.location.href = isNew ? '/dashboard?welcome=true' : '/dashboard';
-    } else {
-      window.location.href = '/login?error=oauth_failed';
-    }
+    };
+
+    void completeLogin();
   }, []);
 
   return (

@@ -6,6 +6,22 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const error =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('error')
+      : null;
+
+  const errorMessageMap: Record<string, string> = {
+    oauth_failed: 'Google sign-in did not complete. Please try again.',
+    oauth_state_invalid: 'Security validation failed during sign-in. Please retry.',
+    oauth_env_missing: 'OAuth is not fully configured on the server.',
+    oauth_code_exchange_failed: 'Google authorization code exchange failed.',
+    oauth_id_token_missing: 'Google did not return an ID token for this sign-in.',
+    oauth_verify_failed: 'Backend token verification failed. Check API deployment.',
+    oauth_backend_unconfigured: 'Backend API URL is not configured for OAuth verification.',
+  };
+
+  const errorMessage = error ? (errorMessageMap[error] || `Sign-in error: ${error}`) : null;
 
   const handleGoogleLogin = () => {
     setLoading(true);
@@ -42,6 +58,12 @@ export default function LoginPage() {
             <span>⚡ Fleet Intelligence</span>
           </div>
         </div>
+
+        {errorMessage && (
+          <div style={{ marginBottom: '1rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.45)', background: 'rgba(239, 68, 68, 0.1)', color: '#fecaca', fontSize: '0.8rem' }}>
+            {errorMessage}
+          </div>
+        )}
 
         {/* Google Sign-In — Primary & Only Auth */}
         <button
