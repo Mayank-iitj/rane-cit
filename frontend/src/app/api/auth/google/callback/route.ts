@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 function redirectWithError(request: NextRequest, code: string): NextResponse {
+  console.error(`[OAuth Error] ${code}`);
   const url = new URL('/login', request.nextUrl.origin);
   url.searchParams.set('error', code);
   return NextResponse.redirect(url.toString());
@@ -15,10 +16,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const oauthError = request.nextUrl.searchParams.get('error');
 
   if (oauthError) {
+    console.error(`[OAuth] Google returned error: ${oauthError}`);
     return redirectWithError(request, oauthError);
   }
 
   if (!code || !state || !stateCookie || state !== stateCookie) {
+    console.error(`[OAuth] State validation failed - code: ${!!code}, state: ${!!state}, cookie: ${!!stateCookie}`);
     return redirectWithError(request, 'oauth_state_invalid');
   }
 
@@ -28,7 +31,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     process.env.GOOGLE_REDIRECT_URI ||
     `${request.nextUrl.protocol}//${request.nextUrl.host}/api/auth/google/callback`;
 
-  if (!clientId || !clientSecret) {
+  if (!clientId) {
+    console.error('[OAuth] GOOGLE_CLIENT_ID not configured');
+    return redirectWithError(request, 'oauth_env_missing');
+  }
+
+  if (!clientSecret) {
+    console.error('[OAuth] GOOGLE_CLIENT_SECRET not configured');
     return redirectWithError(request, 'oauth_env_missing');
   }
 
@@ -46,6 +55,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!tokenResp.ok) {
+    const errorData = await tokenResp.text();
+    console.error(`[OAuth] Token exchange failed: ${tokenResp.status} - ${errorData}`);
     return redirectWithError(request, 'oauth_code_exchange_failed');
   }
 

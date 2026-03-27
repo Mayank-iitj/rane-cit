@@ -5,8 +5,12 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!clientId) {
+    console.error('[OAuth Login] GOOGLE_CLIENT_ID is not configured');
     return NextResponse.json(
-      { error: 'GOOGLE_CLIENT_ID is not configured' },
+      {
+        error: 'oauth_env_missing',
+        message: 'GOOGLE_CLIENT_ID is not configured on the server',
+      },
       { status: 500 },
     );
   }
@@ -14,6 +18,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI ||
     `${request.nextUrl.protocol}//${request.nextUrl.host}/api/auth/google/callback`;
+
+  console.log(`[OAuth Login] Initiating OAuth flow for ${request.nextUrl.host}`);
+  console.log(`[OAuth Login] Redirect URI: ${redirectUri}`);
 
   const state = crypto.randomUUID();
   const params = new URLSearchParams({
