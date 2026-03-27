@@ -1,0 +1,8 @@
+# cnc.mayyanks.app — Robots.txt
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard/
+
+Sitemap: https://cnc.mayyanks.app/sitemap.xml

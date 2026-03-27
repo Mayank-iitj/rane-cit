@@ -1,0 +1,2 @@
+# Alembic migrations directory — cnc-mayyanks-api
+# Run: alembic revision --autogenerate -m "description"

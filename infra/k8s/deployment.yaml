@@ -1,0 +1,210 @@
+# cnc-mayyanks Kubernetes — API Deployment
+# Domain: cnc.mayyanks.app
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnc-mayyanks-api
+  namespace: cnc-mayyanks
+  labels:
+    app: cnc-mayyanks-api
+    product: cnc-mayyanks
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cnc-mayyanks-api
+  template:
+    metadata:
+      labels:
+        app: cnc-mayyanks-api
+    spec:
+      containers:
+        - name: cnc-mayyanks-api
+          image: cnc-mayyanks/api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_NAME
+              value: "cnc-mayyanks-api"
+            - name: APP_DOMAIN
+              value: "cnc.mayyanks.app"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cnc-mayyanks-secrets
+                  key: database-url
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cnc-mayyanks-secrets
+                  key: jwt-secret
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: cnc-mayyanks-secrets
+                  key: google-client-id
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cnc-mayyanks-secrets
+                  key: google-client-secret
+            - name: REDIS_URL
+              value: "redis://cnc-mayyanks-redis:6379/0"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cnc-mayyanks-api
+  namespace: cnc-mayyanks
+spec:
+  selector:
+    app: cnc-mayyanks-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnc-mayyanks-ml-service
+  namespace: cnc-mayyanks
+  labels:
+    app: cnc-mayyanks-ml-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cnc-mayyanks-ml-service
+  template:
+    metadata:
+      labels:
+        app: cnc-mayyanks-ml-service
+    spec:
+      containers:
+        - name: cnc-mayyanks-ml-service
+          image: cnc-mayyanks/ml-service:latest
+          ports:
+            - containerPort: 8001
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cnc-mayyanks-ml-service
+  namespace: cnc-mayyanks
+spec:
+  selector:
+    app: cnc-mayyanks-ml-service
+  ports:
+    - port: 8001
+      targetPort: 8001
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnc-mayyanks-realtime
+  namespace: cnc-mayyanks
+  labels:
+    app: cnc-mayyanks-realtime
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cnc-mayyanks-realtime
+  template:
+    metadata:
+      labels:
+        app: cnc-mayyanks-realtime
+    spec:
+      containers:
+        - name: cnc-mayyanks-realtime
+          image: cnc-mayyanks/realtime:latest
+          ports:
+            - containerPort: 8002
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cnc-mayyanks-realtime
+  namespace: cnc-mayyanks
+spec:
+  selector:
+    app: cnc-mayyanks-realtime
+  ports:
+    - port: 8002
+      targetPort: 8002
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cnc-mayyanks-ingress
+  namespace: cnc-mayyanks
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  tls:
+    - hosts:
+        - cnc.mayyanks.app
+      secretName: cnc-mayyanks-tls
+  rules:
+    - host: cnc.mayyanks.app
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: cnc-mayyanks-api
+                port:
+                  number: 8000
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: cnc-mayyanks-realtime
+                port:
+                  number: 8002
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cnc-mayyanks-frontend
+                port:
+                  number: 3000
