@@ -30,7 +30,7 @@ export class Organization {
   @Column()
   owner_id: string;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   settings: Record<string, any>;
 
   @Column({ default: 0 })

@@ -1,0 +1,29 @@
+Category,Item,Specification,Qty,Unit Cost Rs,Line Total Rs,Preferred Option,Vendor Notes,Lead Time Days,Criticality,Status
+Compute,Raspberry Pi 4 4GB,With power supply and case,1,5500,5500,Primary,Use original PSU and heat-sink case,3,High,Planned
+Control,ESP32 DevKit or Arduino Mega,With USB cable,1,800,800,Primary,ESP32 preferred for WiFi and dual-core,2,High,Planned
+Motion,Stepper motor NEMA17,1.8 deg 0.4 Nm,3,700,2100,Primary,Match shaft/coupler dimensions,5,High,Planned
+Motion,TB6600 stepper driver,Compatible with selected steppers,3,300,900,Primary,Prefer metal body versions,4,High,Planned
+Motion,Linear rail with block,8mm x 300mm,2,1000,2000,Primary,Check straightness and preload,7,High,Planned
+Motion,Lead screw,8mm 2mm pitch 300mm,2,400,800,Primary,Include nut and supports,7,High,Planned
+End Effector,Pneumatic gripper,10-20 mm stroke,1,2500,2500,Primary,Jaw profile based on part geometry,7,High,Planned
+End Effector,Solenoid valve,24V coil for gripper control,1,700,700,Primary,Add manual override switch,4,High,Planned
+End Effector,Air prep kit,Regulator plus tubing and fittings,1,1000,1000,Primary,Include pressure gauge,5,Medium,Planned
+Sensing,Inductive proximity sensor,12mm NPN NO,2,300,600,Primary,Use shielded cables,3,High,Planned
+Sensing,Limit switch,Mechanical roller type,6,70,420,Primary,Use industrial grade if available,2,High,Planned
+Sensing,IR break beam sensor,5-50 cm pair,2,200,400,Primary,Mount with vibration-safe brackets,3,Medium,Planned
+Sensing,Door sensor,Reed or magnetic switch,1,150,150,Primary,Interlock logic required,2,High,Planned
+Sensing,Grip verification sensor,Pressure switch or load cell,1,1000,1000,Recommended,Pressure switch first then load cell,5,Medium,Planned
+Vision,USB camera,1080p class C920 equivalent,1,2500,2500,Primary,Manual focus preferred,4,Medium,Planned
+Vision,LED ring light,12V adjustable,1,800,800,Primary,Dimmable for threshold stability,3,Medium,Planned
+Safety,E-stop button,NC mushroom type,1,500,500,Mandatory,Wire in series with motor enable,2,Critical,Planned
+Safety,Interlock relay,Safety relay optional upgrade,1,2000,2000,Optional,Add for stricter safety architecture,6,High,Planned
+Power,24V SMPS,5A industrial switched PSU,1,1000,1000,Mandatory,Include surge protection,3,Critical,Planned
+Power,12V PSU,2A for camera and lighting,1,400,400,Primary,Separate noisy loads where possible,3,Medium,Planned
+Electrical,Optocoupler module,24V CNC signal isolation,2,250,500,Mandatory,Isolate cycle-complete and start lines,3,Critical,Planned
+Electrical,RS485 transceiver,Modbus RTU communication,1,300,300,Recommended,Use if CNC supports Modbus,3,Medium,Planned
+Mechanical,Frame and fixtures,Mounting brackets and tray system,1,8000,8000,Mandatory,Local fabrication with jig references,10,Critical,Planned
+Mechanical,Fasteners and couplers,Screws spacers couplers and mounts,1,1500,1500,Mandatory,Buy 10 percent extra consumables,2,Medium,Planned
+Infrastructure,Enclosure and cable management,Panel box ducts ferrules labels,1,3000,3000,Mandatory,Industrial enclosure preferred,5,High,Planned
+Software,SD card and backup media,32GB plus backup card,2,400,800,Recommended,Separate image backup card,2,Low,Planned
+Commissioning,Contingency reserve,10 to 20 percent project reserve,1,5000,5000,Mandatory,Use for substitutions and rework,0,High,Planned
+TOTAL,Project total estimate,Initial procurement baseline,1,43070,43070,Reference,Excludes recurring service costs,0,Info,Planned

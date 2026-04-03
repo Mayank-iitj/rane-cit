@@ -33,10 +33,10 @@ export class AuditLog {
   @Column({ nullable: true })
   user_agent: string;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   changes: Record<string, any>; // For UPDATE: { before: {}, after: {} }
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   metadata: Record<string, any>;
 
   @CreateDateColumn()

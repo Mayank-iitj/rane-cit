@@ -22,10 +22,10 @@ export class ApiKey {
   @Column()
   key_prefix: string; // e.g., "cnc_ak_" for UI display
 
-  @Column({ type: 'jsonb', default: ['READ', 'WRITE'] })
+  @Column({ type: 'simple-json', default: '["READ","WRITE"]' })
   permissions: string[];
 
-  @Column({ type: 'jsonb', default: [] })
+  @Column({ type: 'simple-json', default: '[]' })
   allowed_ips: string[];
 
   @Column({ nullable: true })

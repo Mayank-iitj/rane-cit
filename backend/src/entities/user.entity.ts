@@ -47,7 +47,7 @@ export class User {
   @Column({ default: true })
   notifications_enabled: boolean;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   preferences: Record<string, any>;
 
   @Column()

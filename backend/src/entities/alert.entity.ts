@@ -32,7 +32,7 @@ export class Alert {
   @Column({ nullable: true })
   recommended_action: string;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   context: Record<string, any>;
 
   @Column({ nullable: true })

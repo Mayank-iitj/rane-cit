@@ -30,7 +30,7 @@ export class GcodeProgram {
   @Column({ type: 'text', nullable: true })
   optimized_gcode: string;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   optimization_suggestions: Record<string, any>;
 
   @Column({ type: 'float', default: 0 })
@@ -54,7 +54,7 @@ export class GcodeProgram {
   @Column({ nullable: true })
   run_count: number;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   metadata: Record<string, any>;
 
   @Column({ default: true })

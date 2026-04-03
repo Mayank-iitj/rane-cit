@@ -81,38 +81,50 @@ export function clearAuth(): void {
 }
 
 async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  const auth = getAuth();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> | undefined),
-  };
+  try {
+    const auth = getAuth();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> | undefined),
+    };
 
-  if (auth.accessToken) {
-    headers.Authorization = `Bearer ${auth.accessToken}`;
-  }
+    if (auth.accessToken) {
+      headers.Authorization = `Bearer ${auth.accessToken}`;
+    }
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+    const res = await fetch(`${API_URL}${path}`, { ...options, headers });
 
-  if (res.status === 401) {
-    if (auth.refreshToken) {
-      const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: auth.refreshToken }),
-      });
+    if (res.status === 401) {
+      if (auth.refreshToken) {
+        const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: auth.refreshToken }),
+        });
 
-      if (refreshRes.ok) {
-        const data = (await refreshRes.json()) as AuthResponse;
-        setAuth(data);
-        headers.Authorization = `Bearer ${data.access_token}`;
-        return fetch(`${API_URL}${path}`, { ...options, headers });
+        if (refreshRes.ok) {
+          const data = (await refreshRes.json()) as AuthResponse;
+          setAuth(data);
+          headers.Authorization = `Bearer ${data.access_token}`;
+          return fetch(`${API_URL}${path}`, { ...options, headers });
+        }
       }
     }
 
-    // No login redirect - allow anonymous access to continue
+    // FIX: Return response even on error so caller can check .ok
+    if (!res.ok && res.status >= 500) {
+      console.error(`API Error [${res.status}] ${path}`, res.statusText);
+    }
+    return res;
+  } catch (error) {
+    // FIX: Catch network errors and return error response
+    console.error(`API Network Error: ${path}`, error);
+    // Return a mock error response
+    return new Response(JSON.stringify({ error: 'Network error' }), {
+      status: 0,
+      statusText: 'Network error',
+    });
   }
-
-  return res;
 }
 
 export const api = {
@@ -140,29 +152,64 @@ export const api = {
     apiFetch('/gcode/optimize', { method: 'POST', body: JSON.stringify({ gcode }) }),
 };
 
+let globalWs: WebSocket | null = null;
+let wsReconnectTimeout: NodeJS.Timeout | null = null;
+
 export function connectWebSocket(onMessage: (data: WebSocketMessage) => void): WebSocket | null {
   if (typeof window === 'undefined') {
     return null;
   }
 
+  // FIX: Close existing connection before creating new one (prevent memory leak)
+  if (globalWs) {
+    globalWs.close();
+    globalWs = null;
+  }
+
+  // Clear any pending reconnection
+  if (wsReconnectTimeout) {
+    clearTimeout(wsReconnectTimeout);
+    wsReconnectTimeout = null;
+  }
+
   const derivedWsUrl =
     WS_URL ||
-    `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+    `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/realtime`;
 
-  const ws = new WebSocket(derivedWsUrl);
+  try {
+    const ws = new WebSocket(derivedWsUrl);
+    globalWs = ws;
 
-  ws.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data) as WebSocketMessage;
-      onMessage(data);
-    } catch (e) {
-      console.error('[cnc-mayyanks] WebSocket parse error', e);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data) as WebSocketMessage;
+        onMessage(data);
+      } catch (e) {
+        // Silently ignore parse errors in production
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[cnc-mayyanks] WebSocket parse error', e);
+        }
+      }
+    };
+
+    ws.onerror = (error) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[cnc-mayyanks] WebSocket error', error);
+      }
+    };
+
+    ws.onclose = () => {
+      globalWs = null;
+      // Exponential backoff: 3s, 6s, 12s, max 30s
+      const delay = Math.min(3000 * Math.pow(1.5, Math.floor(Math.random() * 10)), 30000);
+      wsReconnectTimeout = setTimeout(() => connectWebSocket(onMessage), delay);
+    };
+
+    return ws;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[cnc-mayyanks] WebSocket connection failed', error);
     }
-  };
-
-  ws.onclose = () => {
-    setTimeout(() => connectWebSocket(onMessage), 3000);
-  };
-
-  return ws;
+    return null;
+  }
 }

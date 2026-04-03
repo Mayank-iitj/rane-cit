@@ -257,8 +257,20 @@ const COPILOT_PRESET_QNA: CopilotPreset[] = [
 export default function DashboardPage() {
   const router = useRouter();
   const DEMO_MODE = true;
-  const startsInWorkflowMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('workflow') === '1';
-  const [activePage, setActivePage] = useState(startsInWorkflowMode ? WORKFLOW_SEQUENCE[0] : 'dashboard');
+  
+  // FIX: Hydration mismatch - determine workflow mode only on client
+  const [workflowModeReady, setWorkflowModeReady] = useState(false);
+  const [startsInWorkflowMode, setStartsInWorkflowMode] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isWorkflow = new URLSearchParams(window.location.search).get('workflow') === '1';
+      setStartsInWorkflowMode(isWorkflow);
+      setWorkflowModeReady(true);
+    }
+  }, []);
+  
+  const [activePage, setActivePage] = useState(WORKFLOW_SEQUENCE[0]);
   const [fleet, setFleet] = useState<FleetData | null>(DEMO_FLEET);
   const [machines, setMachines] = useState<MachineData[]>(DEMO_MACHINES);
   const [alerts, setAlerts] = useState<AlertData[]>(DEMO_ALERTS);
@@ -267,14 +279,16 @@ export default function DashboardPage() {
   const [energy, setEnergy] = useState<EnergyData[]>(DEMO_ENERGY);
   const [liveData, setLiveData] = useState<LiveTelemetry[]>(DEMO_LIVE);
   const [copilotMessages, setCopilotMessages] = useState<CopilotMessage[]>([
-    { role: 'assistant', text: 'Presentation Copilot is in demo mode. Choose one of the 10 preset judge questions below.' },
+    { role: 'assistant', text: 'Presentation Copilot is ready! Choose a preset question above or ask your own question below.' },
   ]);
   const [copilotInput, setCopilotInput] = useState('');
+  const [copilotLoading, setCopilotLoading] = useState(false);
   const [twinState, setTwinState] = useState<TwinState | null>(DEMO_TWIN_STATES[DEMO_MACHINES[0].id]);
-  const [workflowRunning, setWorkflowRunning] = useState(startsInWorkflowMode);
+  const [workflowRunning, setWorkflowRunning] = useState(false);
   const [workflowStep, setWorkflowStep] = useState(0);
-  const [workflowLoop, setWorkflowLoop] = useState(startsInWorkflowMode ? 1 : 0);
+  const [workflowLoop, setWorkflowLoop] = useState(0);
   const [selectedMachineId, setSelectedMachineId] = useState(DEMO_MACHINES[0].id);
+  const [isClickingWorkflow, setIsClickingWorkflow] = useState(false);
 
   const auth = getAuth();
 
@@ -353,6 +367,45 @@ export default function DashboardPage() {
     ]);
   };
 
+  const handleSendQuestion = async () => {
+    if (!copilotInput.trim()) return;
+
+    const userQuestion = copilotInput;
+    setCopilotInput('');
+    setCopilotMessages(prev => [...prev, { role: 'user', text: userQuestion }]);
+    setCopilotLoading(true);
+
+    try {
+      const res = await api.askCopilot(userQuestion, selectedMachineId);
+      if (res.ok) {
+        const data = await res.json();
+        setCopilotMessages(prev => [
+          ...prev,
+          { role: 'assistant', text: data.answer, actions: data.actions },
+        ]);
+      } else {
+        setCopilotMessages(prev => [
+          ...prev,
+          { role: 'assistant', text: 'Error: Could not get response from copilot. Please try again.' },
+        ]);
+      }
+    } catch (error) {
+      setCopilotMessages(prev => [
+        ...prev,
+        { role: 'assistant', text: 'Error: Network request failed.' },
+      ]);
+    } finally {
+      setCopilotLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !copilotLoading) {
+      e.preventDefault();
+      handleSendQuestion();
+    }
+  };
+
   const loadTwin = useCallback(async (machineId: string) => {
     if (DEMO_MODE) {
       setTwinState(DEMO_TWIN_STATES[machineId] || null);
@@ -410,16 +463,100 @@ export default function DashboardPage() {
         setWorkflowLoop((loop) => loop + 1);
         return nextStep;
       });
-    }, 2600);
+    }, 3200); // Increased from 2600ms to 3200ms for better readability
 
     return () => window.clearTimeout(timer);
   }, [loadTwin, selectedMachineId, workflowRunning, workflowStep]);
 
   const startWorkflow = () => {
+    // FIX: Rate limiting - prevent multiple clicks
+    if (isClickingWorkflow || workflowRunning) return;
+    setIsClickingWorkflow(true);
+    setTimeout(() => setIsClickingWorkflow(false), 500);
+    
     setWorkflowStep(0);
     setWorkflowRunning(true);
     setActivePage(WORKFLOW_SEQUENCE[0]);
     setWorkflowLoop((prev) => prev + 1);
+  };
+
+  const pauseWorkflow = () => {
+    setWorkflowRunning(false);
+  };
+
+  const resumeWorkflow = () => {
+    setWorkflowRunning(true);
+  };
+
+  const nextWorkflowStep = () => {
+    const nextStep = workflowStep + 1;
+    if (nextStep < WORKFLOW_SEQUENCE.length) {
+      setWorkflowStep(nextStep);
+      setActivePage(WORKFLOW_SEQUENCE[nextStep]);
+      if (WORKFLOW_SEQUENCE[nextStep] === 'twin') {
+        void loadTwin(selectedMachineId);
+      }
+      setWorkflowLoop((prev) => prev + 1);
+    }
+  };
+
+  const prevWorkflowStep = () => {
+    if (workflowStep > 0) {
+      const prevStep = workflowStep - 1;
+      setWorkflowStep(prevStep);
+      setActivePage(WORKFLOW_SEQUENCE[prevStep]);
+      if (WORKFLOW_SEQUENCE[prevStep] === 'twin') {
+        void loadTwin(selectedMachineId);
+      }
+      setWorkflowLoop((prev) => prev + 1);
+    }
+  };
+
+  const jumpToStep = (stepIndex: number) => {
+    setWorkflowStep(stepIndex);
+    setActivePage(WORKFLOW_SEQUENCE[stepIndex]);
+    if (WORKFLOW_SEQUENCE[stepIndex] === 'twin') {
+      void loadTwin(selectedMachineId);
+    }
+    setWorkflowLoop((prev) => prev + 1);
+  };
+
+  const WORKFLOW_EXPLANATIONS: Record<string, { crux: string; annotation: string; logic: string }> = {
+    dashboard: {
+      crux: 'Fleet Pulse & Risk Posture',
+      annotation: 'Real-time fleet overview showing running machines, utilization, alerts, and energy consumption',
+      logic: 'Aggregates telemetry from all machines (8 total) and displays KPIs: 6 running, 82% utilization, 3 active alerts, 1248.7 kWh consumed'
+    },
+    machines: {
+      crux: 'Machine Command & Status Grid',
+      annotation: 'Detailed inventory of all CNC machines with real-time status and protocol connectivity',
+      logic: 'Lists machine specs (model, maker, location) and current state (running/idle/offline) via MTConnect, OPC-UA, or Modbus adapters'
+    },
+    analytics: {
+      crux: 'Production Intelligence Engine',
+      annotation: 'OEE (Availability, Performance, Quality) and Energy metrics proving operational & financial ROI',
+      logic: 'Calculates OEE per machine (77-84% range typical) and tracks energy costs ($22-26/machine/day). Higher % = better efficiency.'
+    },
+    alerts: {
+      crux: 'Predictive Alert Desk',
+      annotation: 'Actionable alerts prioritized by severity (critical, warning, info) with acknowledgment workflow',
+      logic: 'ML model detects anomalies (temp >90C, vibration spike, tool wear <20%, coolant drop). Human-in-loop review required for critical.'
+    },
+    copilot: {
+      crux: 'Judge Copilot AI Assistant',
+      annotation: '10 preset answers and explainable recommendations for common judge questions',
+      logic: 'Pattern-matched Q&A coupled with real-time data: which machine is highest risk, why OEE dropped, ROI measurable impact, etc.'
+    },
+    twin: {
+      crux: 'Digital Twin Live State',
+      annotation: 'High-fidelity machine state model showing spindle RPM, temp, vibration, tool wear, power, coolant, tool life remaining',
+      logic: 'Mirrors actual machine sensors in real-time. Health score computed from vibration, temp, and tool wear trends. 8 digital twins running.'
+    },
+    api: {
+      crux: 'Developer Integration Surface',
+      annotation: '40+ REST endpoints for machines, telemetry, analytics, ML models, G-code, digital twin, and copilot services',
+      logic: 'Full API surface for 3rd-party integration: edge agents ingest telemetry → API processes → ML predicts → alerts notify → UI displays'
+    },
   };
 
   // ═══════ RENDER ═══════
@@ -468,10 +605,18 @@ export default function DashboardPage() {
             <h2 className="topbar-title">{navItems.find(n => n.id === activePage)?.label || 'Dashboard'}</h2>
           </div>
           <div className="topbar-actions">
-            <button className="btn btn-primary workflow-run-btn" onClick={startWorkflow}>
-              <Icon d={icons.zap} />
-              {workflowRunning ? 'Workflow Running' : 'Run Workflow'}
-            </button>
+            {!workflowRunning ? (
+              <button className="btn btn-primary workflow-run-btn" onClick={startWorkflow} disabled={isClickingWorkflow}>
+                <Icon d={icons.zap} />
+                Run Workflow
+              </button>
+            ) : (
+              <>
+                <button className="btn btn-secondary" onClick={pauseWorkflow} title="Pause automation">⏸ Pause</button>
+                <button className="btn btn-secondary" onClick={prevWorkflowStep} disabled={workflowStep === 0} title="Previous step">← Prev</button>
+                <button className="btn btn-secondary" onClick={nextWorkflowStep} disabled={workflowStep >= WORKFLOW_SEQUENCE.length - 1} title="Next step">Next →</button>
+              </>
+            )}
             {workflowRunning && (
               <span className="badge badge-blue workflow-stage-badge">
                 Stage {Math.min(workflowStep + 1, WORKFLOW_SEQUENCE.length)} / {WORKFLOW_SEQUENCE.length}
@@ -483,17 +628,89 @@ export default function DashboardPage() {
         </header>
 
         {workflowRunning && (
-          <div className="workflow-progress-wrap" role="status" aria-live="polite">
-            <div className="workflow-progress-label">
-              Judge Demo Workflow: {navItems.find((n) => n.id === activePage)?.label || 'Dashboard'}
+          <>
+            <div className="workflow-progress-wrap" role="status" aria-live="polite">
+              <div className="workflow-progress-label">
+                ⚡ Judge Demo Workflow: {navItems.find((n) => n.id === activePage)?.label || 'Dashboard'} 
+                <span style={{ fontSize: '0.85rem', marginLeft: '0.5rem', color: '#94a3b8' }}>Step {Math.min(workflowStep + 1, WORKFLOW_SEQUENCE.length)} of {WORKFLOW_SEQUENCE.length}</span>
+              </div>
+              <div className="workflow-progress-track">
+                <div
+                  className="workflow-progress-fill"
+                  style={{ width: `${((Math.min(workflowStep + 1, WORKFLOW_SEQUENCE.length)) / WORKFLOW_SEQUENCE.length) * 100}%` }}
+                />
+              </div>
             </div>
-            <div className="workflow-progress-track">
-              <div
-                className="workflow-progress-fill"
-                style={{ width: `${((Math.min(workflowStep + 1, WORKFLOW_SEQUENCE.length)) / WORKFLOW_SEQUENCE.length) * 100}%` }}
-              />
+
+            {/* Workflow Step Navigator */}
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              overflowX: 'auto',
+              padding: '0 1rem 1rem',
+              backgroundColor: 'rgba(15, 23, 42, 0.5)',
+              marginBottom: '1rem',
+              borderRadius: '0.5rem',
+              scrollBehavior: 'smooth'
+            }}>
+              {WORKFLOW_SEQUENCE.map((step, idx) => (
+                <button
+                  key={step}
+                  onClick={() => jumpToStep(idx)}
+                  className={`btn ${idx === workflowStep ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{
+                    padding: '0.4rem 0.8rem',
+                    fontSize: '0.8rem',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    transition: 'all 0.3s ease',
+                    backgroundColor: idx === workflowStep ? '#0ea5e9' : idx < workflowStep ? '#34d399' : undefined,
+                  }}
+                >
+                  {idx + 1}. {navItems.find(n => n.id === step)?.label}
+                </button>
+              ))}
             </div>
-          </div>
+
+            {/* Workflow Explanation Panel */}
+            <div
+              style={{
+                backgroundColor: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(34, 211, 238, 0.05) 100%)',
+                border: '1px solid rgba(34, 211, 238, 0.3)',
+                borderRadius: '0.5rem',
+                padding: '1rem',
+                marginBottom: '1.5rem',
+                animation: 'slideInUp 0.4s ease-out',
+              }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <p style={{ fontSize: '0.7rem', color: '#22d3ee', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
+                    🎯 THE CRUX
+                  </p>
+                  <p style={{ fontSize: '0.95rem', fontWeight: 600, color: '#e0f2fe', marginBottom: '0.25rem' }}>
+                    {WORKFLOW_EXPLANATIONS[activePage]?.crux || 'Feature Overview'}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
+                    📌 ANNOTATION
+                  </p>
+                  <p style={{ fontSize: '0.85rem', color: '#d1fae5', lineHeight: 1.5 }}>
+                    {WORKFLOW_EXPLANATIONS[activePage]?.annotation || 'Interactive feature exploring system capability'}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
+                    ⚙️ ENGINE LOGIC
+                  </p>
+                  <p style={{ fontSize: '0.8rem', color: '#fef3c7', lineHeight: 1.5 }}>
+                    {WORKFLOW_EXPLANATIONS[activePage]?.logic || 'System processes and algorithms'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         <div key={`${activePage}-${workflowLoop}`} className="page-content page-transition">
@@ -674,7 +891,7 @@ export default function DashboardPage() {
           {activePage === 'copilot' && (
             <div className="chat-container">
               <div className="card" style={{ margin: '0 1rem 1rem' }}>
-                <div className="card-header"><span className="card-title">Judge Demo Questions (Preset)</span></div>
+                <div className="card-header"><span className="card-title">📌 Preset Judge Questions</span></div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {COPILOT_PRESET_QNA.map((item, idx) => (
                     <button
@@ -704,16 +921,31 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ))}
+                {copilotLoading && (
+                  <div className="chat-message">
+                    <div className="chat-bubble" style={{ opacity: 0.7 }}>
+                      <div>🤔 Thinking...</div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="chat-input-area">
                 <input
                   className="form-input"
-                  placeholder="Preset Q&A mode enabled for judges presentation"
+                  placeholder="Ask any question about your CNC machines, optimization, diagnostics, energy..."
                   value={copilotInput}
                   onChange={e => setCopilotInput(e.target.value)}
-                  readOnly
+                  onKeyPress={handleKeyPress}
+                  disabled={copilotLoading}
+                  style={{ opacity: copilotLoading ? 0.6 : 1 }}
                 />
-                <button className="btn btn-primary" disabled>Preset Only</button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={handleSendQuestion}
+                  disabled={copilotLoading || !copilotInput.trim()}
+                >
+                  {copilotLoading ? '⏳ Sending...' : 'Send'}
+                </button>
               </div>
             </div>
           )}

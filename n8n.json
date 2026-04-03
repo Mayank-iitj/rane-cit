@@ -1,0 +1,859 @@
+{
+  "name": "CNC Intelligence Platform - Master Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Fleet Monitor Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1460,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.CNC_API_BASE_URL}}/analytics/fleet",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Get Fleet Analytics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1240,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.active_alerts || 0}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "If Active Alerts",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1020,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.CNC_API_BASE_URL}}/alerts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4",
+      "name": "Get Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -790,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alerts = Array.isArray($json) ? $json : ($json.data || []);\nconst top = alerts.slice(0, 10);\nconst rows = top.map((a, i) => `${i + 1}. [${(a.severity || 'info').toUpperCase()}] ${a.title || a.type || 'Alert'} | machine=${a.machine_id || 'n/a'} | ack=${a.is_acknowledged ? 'yes' : 'no'}`).join('\\n');\nreturn [{\n  json: {\n    alert_count: alerts.length,\n    alert_digest_text: rows || 'No active alerts returned by API',\n    generated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "5",
+      "name": "Build Alert Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.SMTP_FROM}}",
+        "toEmail": "={{$env.ALERT_EMAIL_TO}}",
+        "subject": "CNC Alert Digest - {{$json.alert_count}} active alerts",
+        "emailType": "text",
+        "message": "Generated: {{$json.generated_at}}\n\n{{$json.alert_digest_text}}",
+        "options": {}
+      },
+      "id": "6",
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -330,
+        -540
+      ],
+      "credentials": {
+        "smtp": {
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.TEAMS_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\":\"CNC Alerts: {{$json.alert_count}} active\\n{{$json.alert_digest_text}}\"}",
+        "options": {}
+      },
+      "id": "7",
+      "name": "Post Teams Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -330,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "status",
+              "value": "Fleet healthy: no active alerts",
+              "type": "string"
+            },
+            {
+              "name": "generated_at",
+              "value": "={{new Date().toISOString()}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8",
+      "name": "Log Healthy Fleet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -790,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "cronExpression": "0 7 * * *"
+        }
+      },
+      "id": "9",
+      "name": "Daily Ops Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1460,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.CNC_API_BASE_URL}}/analytics/oee",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "10",
+      "name": "Get OEE",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1240,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.CNC_API_BASE_URL}}/analytics/energy",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "11",
+      "name": "Get Energy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1240,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine"
+      },
+      "id": "12",
+      "name": "Merge Daily Metrics",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1010,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const oeePayload = $input.item(0, 0).json;\nconst energyPayload = $input.item(1, 0).json;\nconst oee = Array.isArray(oeePayload) ? oeePayload : (oeePayload.data || []);\nconst energy = Array.isArray(energyPayload) ? energyPayload : (energyPayload.data || []);\n\nconst avgOee = oee.length ? (oee.reduce((s, r) => s + Number(r.oee || 0), 0) / oee.length).toFixed(2) : '0.00';\nconst totalKwh = energy.reduce((s, r) => s + Number(r.total_kwh || 0), 0).toFixed(2);\n\nconst html = `\n<h2>CNC Daily Operations Summary</h2>\n<p><b>Date:</b> ${new Date().toISOString()}</p>\n<p><b>Average OEE:</b> ${avgOee}%</p>\n<p><b>Total Energy:</b> ${totalKwh} kWh</p>\n<h3>Top OEE Rows</h3>\n<pre>${JSON.stringify(oee.slice(0, 5), null, 2)}</pre>\n<h3>Top Energy Rows</h3>\n<pre>${JSON.stringify(energy.slice(0, 5), null, 2)}</pre>\n`;\n\nreturn [{ json: { avg_oee: avgOee, total_kwh: totalKwh, report_html: html } }];"
+      },
+      "id": "13",
+      "name": "Build Daily Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -790,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.SMTP_FROM}}",
+        "toEmail": "={{$env.REPORT_EMAIL_TO}}",
+        "subject": "CNC Daily Report | OEE {{$json.avg_oee}}% | {{$json.total_kwh}} kWh",
+        "emailType": "html",
+        "message": "={{$json.report_html}}",
+        "options": {}
+      },
+      "id": "14",
+      "name": "Send Daily Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -560,
+        20
+      ],
+      "credentials": {
+        "smtp": {
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cnc/alert-escalation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "15",
+      "name": "Alert Escalation Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1460,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body?.severity || $json.severity || ''}}",
+              "operation": "equals",
+              "value2": "critical"
+            }
+          ],
+          "boolean": [
+            {
+              "value1": "={{$json.body?.is_acknowledged ?? $json.is_acknowledged ?? false}}",
+              "operation": "isFalse"
+            }
+          ]
+        }
+      },
+      "id": "16",
+      "name": "If Critical and Unacked",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1240,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.INCIDENT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"source\":\"cnc-intelligence\",\"severity\":\"critical\",\"payload\":{{$json.body || $json}}}",
+        "options": {}
+      },
+      "id": "17",
+      "name": "Create Incident Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "status",
+              "value": "ignored_non_critical_or_acked",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18",
+      "name": "Mark Ignored Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1020,
+        470
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "19",
+      "name": "Respond Alert Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -790,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cnc/gcode-optimize",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "20",
+      "name": "Gcode Optimization Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1460,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.CNC_API_BASE_URL}}/gcode/optimize",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"gcode\": $json.body?.gcode || $json.gcode || \"\"}",
+        "options": {}
+      },
+      "id": "21",
+      "name": "Optimize Gcode",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1240,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.CNC_API_BASE_URL}}/copilot/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"question\":\"Explain this G-code optimization result for a production manager:\",\"context\":$json}",
+        "options": {}
+      },
+      "id": "22",
+      "name": "Ask Copilot for Explanation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1020,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const optimizeResult = $input.item(0, 0).json;\nconst copilotResult = $input.item(0, 1).json;\nreturn [{\n  json: {\n    success: true,\n    optimize_result: optimizeResult,\n    copilot_explanation: copilotResult,\n    generated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "23",
+      "name": "Build Gcode Webhook Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -790,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "24",
+      "name": "Respond Gcode Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "cronExpression": "0 * * * *"
+        }
+      },
+      "id": "25",
+      "name": "Hourly Optimization Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1460,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.CNC_API_BASE_URL}}/optimize/parameters",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"scope\":\"fleet\",\"horizon\":\"next_60_min\"}",
+        "options": {}
+      },
+      "id": "26",
+      "name": "Get Optimization Recommendations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1240,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.CNC_API_BASE_URL}}/copilot/ask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.CNC_API_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"question\":\"Summarize and prioritize these hourly optimization recommendations for operations leaders.\",\"context\":$json}",
+        "options": {}
+      },
+      "id": "27",
+      "name": "Summarize Recommendations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1020,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.SMTP_FROM}}",
+        "toEmail": "={{$env.OPS_EMAIL_TO}}",
+        "subject": "Hourly CNC Optimization Recommendations",
+        "emailType": "text",
+        "message": "={{JSON.stringify($json, null, 2)}}",
+        "options": {}
+      },
+      "id": "28",
+      "name": "Send Hourly Optimization Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -790,
+        1120
+      ],
+      "credentials": {
+        "smtp": {
+          "name": "SMTP Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Fleet Monitor Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Fleet Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Fleet Analytics": {
+      "main": [
+        [
+          {
+            "node": "If Active Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Active Alerts": {
+      "main": [
+        [
+          {
+            "node": "Get Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Healthy Fleet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Alerts": {
+      "main": [
+        [
+          {
+            "node": "Build Alert Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Alert Digest": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post Teams Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Ops Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get OEE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Energy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get OEE": {
+      "main": [
+        [
+          {
+            "node": "Merge Daily Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Energy": {
+      "main": [
+        [
+          {
+            "node": "Merge Daily Metrics",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Daily Metrics": {
+      "main": [
+        [
+          {
+            "node": "Build Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Daily Report": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Escalation Webhook": {
+      "main": [
+        [
+          {
+            "node": "If Critical and Unacked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Critical and Unacked": {
+      "main": [
+        [
+          {
+            "node": "Create Incident Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Ignored Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Incident Ticket": {
+      "main": [
+        [
+          {
+            "node": "Respond Alert Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Ignored Alert": {
+      "main": [
+        [
+          {
+            "node": "Respond Alert Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gcode Optimization Webhook": {
+      "main": [
+        [
+          {
+            "node": "Optimize Gcode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Optimize Gcode": {
+      "main": [
+        [
+          {
+            "node": "Ask Copilot for Explanation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Copilot for Explanation": {
+      "main": [
+        [
+          {
+            "node": "Build Gcode Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gcode Webhook Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Gcode Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly Optimization Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Optimization Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Optimization Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Summarize Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Send Hourly Optimization Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "active": false
+}

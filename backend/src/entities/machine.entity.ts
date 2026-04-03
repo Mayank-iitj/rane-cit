@@ -61,10 +61,10 @@ export class Machine {
   @Column({ nullable: true })
   api_key: string;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   specifications: Record<string, any>;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   metadata: Record<string, any>;
 
   @Column({ default: true })

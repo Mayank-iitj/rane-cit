@@ -11,7 +11,7 @@ export class Telemetry {
   @Column()
   machine_id: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   timestamp: Date;
 
   @Column({ type: 'float', nullable: true })
@@ -44,7 +44,7 @@ export class Telemetry {
   @Column({ type: 'float', nullable: true })
   progress_percent: number;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ type: 'simple-json', default: '{}' })
   raw_data: Record<string, any>;
 
   @CreateDateColumn()
